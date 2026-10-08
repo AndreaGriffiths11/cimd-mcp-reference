@@ -8,11 +8,7 @@ Public page (once GitHub Pages is on): https://andreagriffiths11.github.io/cimd-
 
 Live Worker: https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp
 
-That URL advertises `"client_id_metadata_document_supported": true`. Anyone can open a consent screen on it, so set `CONSENT_PASSWORD` if you have not already:
-
-```bash
-npx wrangler secret put CONSENT_PASSWORD
-```
+That URL advertises `"client_id_metadata_document_supported": true`. The hosted demo has an open consent screen with no password on purpose, so anyone can try the full CIMD flow. Tokens only reach the demo tools (`whoami`, `current_time`, `add_note`, `list_notes`) and demo notes.
 
 Try it with MCP Inspector (no local server needed):
 
@@ -104,7 +100,7 @@ npx wrangler login
 npx wrangler deploy
 ```
 
-Then set `ISSUER` in `wrangler.jsonc` to your public URL (for example `https://cimd-mcp-reference.<account>.workers.dev`) and deploy again. Optional: `npx wrangler secret put CONSENT_PASSWORD` to protect the consent screen.
+Then set `ISSUER` in `wrangler.jsonc` to your public URL (for example `https://cimd-mcp-reference.<account>.workers.dev`) and deploy again. `CONSENT_PASSWORD` is an optional Worker secret that gates the consent screen. A real server should use real user login.
 
 Check it worked: open `https://<your-worker>/.well-known/oauth-authorization-server` and look for `"client_id_metadata_document_supported": true`.
 
@@ -125,7 +121,7 @@ Details and commands: [docs/clients.md](docs/clients.md).
 - Tokens are bound to `{issuer}/mcp`. Anything else is a 401.
 - Codes and refresh tokens are single-use. Replaying a refresh token revokes the grant.
 - Metadata fetches never follow redirects, cap size and time, and refuse private addresses.
-- One demo user (`demo-user`). Set `CONSENT_PASSWORD` if the Worker is public. This is a reference, not an identity provider.
+- One demo user (`demo-user`). The hosted demo leaves the consent screen open so people can try the CIMD flow. Tokens only reach demo tools and demo notes. On your own copy, `CONSENT_PASSWORD` is an optional Worker secret that gates consent. A real server should use real user login.
 - No secrets in the repo. `.dev.vars` only enables loopback CIMD for `wrangler dev`.
 
 More: [docs/security.md](docs/security.md).

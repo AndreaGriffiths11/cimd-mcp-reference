@@ -74,7 +74,7 @@ Set in `wrangler.jsonc` (`vars`), `.dev.vars` (local), or `wrangler secret put`.
 | `ENABLE_DEPRECATED_DCR` | `false` | Expose `POST /register` and `registration_endpoint` |
 | `CIMD_ALLOWED_HOSTS` | empty | Comma-separated allow list of metadata hosts. Empty means any public host |
 | `ALLOWED_ORIGINS` | empty | Browser origins allowed to call `/mcp` |
-| `CONSENT_PASSWORD` | unset | Secret. When set, consent requires it before a code is issued |
+| `CONSENT_PASSWORD` | unset | Optional Worker secret that gates the consent screen. The hosted demo leaves this unset on purpose. A real server should use real user login. |
 
 ## Deprecated DCR
 
