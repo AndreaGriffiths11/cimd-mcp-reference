@@ -26,6 +26,8 @@ export default {
       "/token",
       "/revoke",
       "/register",
+      "/examples/inspector-web.json",
+      "/examples/inspector-cli.json",
     ]);
     if (request.method === "OPTIONS" && corsRoutes.has(path)) return preflight(request);
 
@@ -61,6 +63,17 @@ async function route(request: Request, env: Env, config: Config, path: string): 
 
     case MCP_PATH:
       return handleMcp(request, env, config);
+
+    // Sample Client ID Metadata Documents. The client_id is this request's
+    // URL so a deployed copy and a local wrangler each produce a matching document.
+    case "/examples/inspector-web.json":
+      return request.method === "GET"
+        ? exampleClientMetadata(request, "MCP Inspector (web)", ["http://localhost:6274/oauth/callback"])
+        : methodNotAllowed("GET");
+    case "/examples/inspector-cli.json":
+      return request.method === "GET"
+        ? exampleClientMetadata(request, "MCP Inspector (CLI/TUI)", ["http://127.0.0.1:6276/oauth/callback"])
+        : methodNotAllowed("GET");
 
     default:
       return json({ error: "not_found" }, { status: 404 });
@@ -116,6 +129,20 @@ function corsForOrigin(response: Response, origin: string | null, config: Config
 
 function metadata(document: Record<string, unknown>): Response {
   return json(document, { status: 200 }, { "Cache-Control": "public, max-age=300" });
+}
+
+function exampleClientMetadata(request: Request, clientName: string, redirectUris: string[]): Response {
+  const url = new URL(request.url);
+  const clientId = `${url.origin}${url.pathname}`;
+  return metadata({
+    client_id: clientId,
+    client_name: clientName,
+    client_uri: "https://modelcontextprotocol.io/docs/tools/inspector",
+    redirect_uris: redirectUris,
+    grant_types: ["authorization_code", "refresh_token"],
+    response_types: ["code"],
+    token_endpoint_auth_method: "none",
+  });
 }
 
 function methodNotAllowed(allow: string): Response {

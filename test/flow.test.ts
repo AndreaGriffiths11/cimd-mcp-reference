@@ -160,6 +160,14 @@ describe("discovery", () => {
     expect(challenge).toContain('scope="mcp:tools"');
   });
 
+  it("serves sample Inspector Client ID Metadata Documents whose client_id equals the document URL", async () => {
+    const response = await SELF.fetch(`${ISSUER}/examples/inspector-web.json`);
+    expect(response.status).toBe(200);
+    const doc = (await response.json()) as { client_id: string; redirect_uris: string[] };
+    expect(doc.client_id).toBe(`${ISSUER}/examples/inspector-web.json`);
+    expect(doc.redirect_uris).toEqual(["http://localhost:6274/oauth/callback"]);
+  });
+
   it("answers OPTIONS preflight on public endpoints", async () => {
     const response = await SELF.fetch(`${ISSUER}/token`, { method: "OPTIONS", headers: { Origin: "https://x.example" } });
     expect(response.status).toBe(204);
