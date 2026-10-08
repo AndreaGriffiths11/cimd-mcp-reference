@@ -14,8 +14,8 @@ Endpoints, behaviour, and configuration. Read the [README](../README.md) first.
 | `POST /revoke` | RFC 7009 |
 | `POST /register` | RFC 7591 DCR, only when `ENABLE_DEPRECATED_DCR=true` |
 | `POST /mcp` | Streamable HTTP MCP endpoint, Bearer token required |
-| `GET /examples/inspector-web.json` | CIMD document for MCP Inspector web (`http://localhost:6274/oauth/callback`) |
-| `GET /examples/inspector-cli.json` | CIMD document for Inspector CLI/TUI (`http://127.0.0.1:6276/oauth/callback`) |
+| `GET /examples/inspector-web.json` | CIMD document for MCP Inspector web (`http://localhost:6274/oauth/callback`). Same-origin authorize uses this document locally instead of fetching it. |
+| `GET /examples/inspector-cli.json` | CIMD document for Inspector CLI/TUI (`http://127.0.0.1:6276/oauth/callback`). Same as above. |
 
 Unauthenticated `/mcp` requests get:
 

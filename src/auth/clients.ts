@@ -9,6 +9,7 @@ import {
   validateClientIdUrl,
   validateClientMetadataDocument,
 } from "./cimd.js";
+import { buildExampleClientMetadata, isSameOriginExampleClientId } from "./example-clients.js";
 import { resolveWithDoH } from "./ssrf.js";
 
 export interface ResolvedClient {
@@ -35,6 +36,8 @@ export async function resolveClient(clientId: string, config: Config, env: Env):
     const { metadata, fromCache } = await fetchClientMetadata(url, policy, {
       fetch: (input, init) => fetch(input, init),
       resolve: resolveWithDoH,
+      localDocument: (documentUrl) =>
+        isSameOriginExampleClientId(documentUrl, config.issuer) ? buildExampleClientMetadata(documentUrl.href) : undefined,
       cache: {
         async get(documentUrl) {
           const cached = await store.getCachedClientMetadata(await sha256Base64url(documentUrl));
