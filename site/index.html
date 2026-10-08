@@ -122,7 +122,7 @@
   "redirect_uris": ["http://127.0.0.1:3000/callback"],
   "token_endpoint_auth_method": "none"
 }</pre>
-      <p>This repository is a working server-side example of that path: discovery, CIMD fetch with SSRF guards, consent, PKCE tokens, and a Streamable HTTP MCP endpoint.</p>
+      <p>This is a working server-side example of that path: discovery, CIMD fetch with SSRF guards, consent, PKCE tokens, and a Streamable HTTP MCP endpoint.</p>
 
       <h2>Why CIMD replaces DCR</h2>
       <p>DCR lets any caller create a client on your authorization server. That is convenient for first contact and expensive as a trust model: the server learns nothing durable about who the client is, and <code>/register</code> becomes an open write endpoint.</p>
@@ -147,32 +147,6 @@ sequenceDiagram
     W-->>C: access_token
     C->>W: POST /mcp with Bearer token
         </pre>
-      </div>
-
-      <h2>Run it locally</h2>
-      <p>Requires Node.js 20.11 or newer. This is a second copy on your machine, not the live Worker above.</p>
-      <pre>git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
-cd cimd-mcp-reference
-npm install
-npm run dev
-node examples/client/cimd-client.mjs</pre>
-      <p>Terminal 1 is the server at <code>http://localhost:8787</code>. Terminal 2 opens a consent screen. Click Approve. The client then calls <code>whoami</code>, saves a note, and refreshes the token.</p>
-      <p><code>--auto-consent</code> approves without a browser (local only). <code>--no-browser</code> prints the URL instead of opening it. <code>npm test</code> runs 120 tests. <code>npm run typecheck</code> typechecks.</p>
-
-      <h2>Docs in the repository</h2>
-      <p class="note">These paths open on GitHub once the repository is public. They 404 while it stays private.</p>
-      <ul class="docs">
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/README.md">README.md</a> (English)</li>
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/README.es.md">README.es.md</a> (Español)</li>
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/reference.md">docs/reference.md</a> endpoints, CIMD rules, config</li>
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/clients.md">docs/clients.md</a> Inspector, Claude, Cursor, Windsurf</li>
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/security.md">docs/security.md</a> tokens, SSRF, consent</li>
-      </ul>
-
-      <h2>Repository</h2>
-      <div class="repo">
-        <p>The source is on GitHub. The repository is private today, so this URL will not open for most readers until the owner publishes it.</p>
-        <p><code>https://github.com/AndreaGriffiths11/cimd-mcp-reference</code></p>
       </div>
 
       <h2>Specs</h2>
@@ -212,7 +186,7 @@ node examples/client/cimd-client.mjs</pre>
   "redirect_uris": ["http://127.0.0.1:3000/callback"],
   "token_endpoint_auth_method": "none"
 }</pre>
-      <p>Este repositorio es un ejemplo funcional del lado servidor: descubrimiento, descarga CIMD con protecciones SSRF, consentimiento, tokens PKCE y un endpoint MCP Streamable HTTP.</p>
+      <p>Este es un ejemplo funcional del lado servidor: descubrimiento, descarga CIMD con protecciones SSRF, consentimiento, tokens PKCE y un endpoint MCP Streamable HTTP.</p>
 
       <h2>Por qué CIMD sustituye a DCR</h2>
       <p>DCR permite que cualquiera cree un cliente en tu servidor de autorización. Es cómodo para el primer contacto y caro como modelo de confianza: el servidor no aprende nada durable sobre quién es el cliente, y <code>/register</code> queda como un endpoint de escritura abierto.</p>
@@ -237,32 +211,6 @@ sequenceDiagram
     W-->>C: access_token
     C->>W: POST /mcp con token Bearer
         </pre>
-      </div>
-
-      <h2>Ejecútalo en local</h2>
-      <p>Requiere Node.js 20.11 o superior. Esta es una segunda copia en tu máquina, no el Worker en vivo de arriba.</p>
-      <pre>git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
-cd cimd-mcp-reference
-npm install
-npm run dev
-node examples/client/cimd-client.mjs</pre>
-      <p>La terminal 1 es el servidor en <code>http://localhost:8787</code>. La terminal 2 abre una pantalla de consentimiento. Pulsa Approve. El cliente llama a <code>whoami</code>, guarda una nota y renueva el token.</p>
-      <p><code>--auto-consent</code> aprueba sin navegador (solo local). <code>--no-browser</code> imprime la URL en lugar de abrirla. <code>npm test</code> ejecuta 120 pruebas. <code>npm run typecheck</code> comprueba tipos.</p>
-
-      <h2>Documentación en el repositorio</h2>
-      <p class="note">Estas rutas se abren en GitHub cuando el repositorio sea público. Mientras sea privado, dan 404.</p>
-      <ul class="docs">
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/README.md">README.md</a> (English)</li>
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/README.es.md">README.es.md</a> (Español)</li>
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/reference.md">docs/reference.md</a> endpoints, reglas CIMD, configuración (en inglés)</li>
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/clients.md">docs/clients.md</a> Inspector, Claude, Cursor, Windsurf (en inglés)</li>
-        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/security.md">docs/security.md</a> tokens, SSRF, consentimiento (en inglés)</li>
-      </ul>
-
-      <h2>Repositorio</h2>
-      <div class="repo">
-        <p>El código está en GitHub. El repositorio es privado hoy, así que esta URL no se abrirá para la mayoría de lectores hasta que la dueña lo publique.</p>
-        <p><code>https://github.com/AndreaGriffiths11/cimd-mcp-reference</code></p>
       </div>
 
       <h2>Especificaciones</h2>
