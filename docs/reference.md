@@ -69,7 +69,7 @@ Set in `wrangler.jsonc` (`vars`), `.dev.vars` (local), or `wrangler secret put`.
 
 | Name | Default | Meaning |
 | --- | --- | --- |
-| `ISSUER` | empty | Public HTTPS origin. Empty derives it from each request, which is fine for `wrangler dev` |
+| `ISSUER` | `https://cimd-mcp-reference.andrea-oauth-demos.workers.dev` | Public HTTPS origin. Empty derives it from each request, which is fine for `wrangler dev` |
 | `DEV_ALLOW_LOOPBACK_CLIENT_IDS` | `false` | Accept `http://127.0.0.1` CIMD URLs. Only honoured when the issuer is loopback too |
 | `ENABLE_DEPRECATED_DCR` | `false` | Expose `POST /register` and `registration_endpoint` |
 | `CIMD_ALLOWED_HOSTS` | empty | Comma-separated allow list of metadata hosts. Empty means any public host |

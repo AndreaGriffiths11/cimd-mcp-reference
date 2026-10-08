@@ -100,7 +100,18 @@
     <article id="en" lang="en">
       <h1>CIMD MCP reference server</h1>
       <p class="lede">A remote MCP server on Cloudflare Workers that accepts OAuth clients identified by a Client ID Metadata Document. No developer portal, no <code>client_secret</code>, no <code>POST /register</code>.</p>
-      <p class="note">This page is documentation. There is no live demo server here. Run the Worker locally, or deploy your own copy, to try the flow.</p>
+
+      <h2>Live Worker</h2>
+      <p>A public copy is running at:</p>
+      <div class="repo">
+        <p><code>https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</code></p>
+      </div>
+      <p>It advertises <code>client_id_metadata_document_supported: true</code>. Try it with MCP Inspector:</p>
+      <pre>npx @modelcontextprotocol/inspector \
+  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
+  --transport http \
+  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
+      <p class="note">The consent screen is public. Anyone who can load it can issue a token for the demo user unless a <code>CONSENT_PASSWORD</code> is set.</p>
 
       <h2>What this is</h2>
       <p>MCP clients talk to servers they have never seen. Classic OAuth assumes the server already knows the app. That is why MCP used Dynamic Client Registration (DCR, RFC 7591): the client posted to <code>/register</code> and the server minted a <code>client_id</code>.</p>
@@ -138,8 +149,8 @@ sequenceDiagram
         </pre>
       </div>
 
-      <h2>Quick start</h2>
-      <p>Requires Node.js 20.11 or newer. This runs on your machine. It does not use a hosted Worker.</p>
+      <h2>Run it locally</h2>
+      <p>Requires Node.js 20.11 or newer. This is a second copy on your machine, not the live Worker above.</p>
       <pre>git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
 cd cimd-mcp-reference
 npm install
@@ -179,7 +190,18 @@ node examples/client/cimd-client.mjs</pre>
     <article id="es" lang="es" hidden>
       <h1>Servidor MCP de referencia con CIMD</h1>
       <p class="lede">Un servidor MCP remoto en Cloudflare Workers que acepta clientes OAuth identificados por un Client ID Metadata Document. Sin portal de desarrolladores, sin <code>client_secret</code>, sin <code>POST /register</code>.</p>
-      <p class="note">Esta página es documentación. No hay un servidor de demostración en vivo aquí. Ejecuta el Worker en local, o despliega tu propia copia, para probar el flujo.</p>
+
+      <h2>Worker en vivo</h2>
+      <p>Hay una copia pública en:</p>
+      <div class="repo">
+        <p><code>https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</code></p>
+      </div>
+      <p>Anuncia <code>client_id_metadata_document_supported: true</code>. Pruébalo con MCP Inspector:</p>
+      <pre>npx @modelcontextprotocol/inspector \
+  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
+  --transport http \
+  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
+      <p class="note">La pantalla de consentimiento es pública. Quien la cargue puede emitir un token para el usuario de demostración si no hay un <code>CONSENT_PASSWORD</code>.</p>
 
       <h2>Qué es esto</h2>
       <p>Los clientes MCP hablan con servidores que nunca han visto. OAuth clásico asume que el servidor ya conoce la aplicación. Por eso MCP usaba Dynamic Client Registration (DCR, RFC 7591): el cliente hacía POST a <code>/register</code> y el servidor emitía un <code>client_id</code>.</p>
@@ -217,8 +239,8 @@ sequenceDiagram
         </pre>
       </div>
 
-      <h2>Inicio rápido</h2>
-      <p>Requiere Node.js 20.11 o superior. Esto corre en tu máquina. No usa un Worker alojado.</p>
+      <h2>Ejecútalo en local</h2>
+      <p>Requiere Node.js 20.11 o superior. Esta es una segunda copia en tu máquina, no el Worker en vivo de arriba.</p>
       <pre>git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
 cd cimd-mcp-reference
 npm install
@@ -257,7 +279,7 @@ node examples/client/cimd-client.mjs</pre>
   </main>
 
   <footer>
-    <p>Andrea Griffiths. MIT. Not a hosted MCP server.</p>
+    <p>Andrea Griffiths. MIT. Live Worker: cimd-mcp-reference.andrea-oauth-demos.workers.dev</p>
   </footer>
 
   <script type="module">

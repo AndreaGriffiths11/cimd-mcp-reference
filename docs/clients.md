@@ -18,11 +18,13 @@ Verified against local `wrangler dev` on 8 October 2026: CIMD fetch, consent, co
 
 Inspector 2.x supports CIMD via `--client-metadata-url` ([authorization](https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector/authorization), [flags](https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector/configuration)). Inspector requires that URL to be `https` with a non-root path, so a plain `http://localhost:8787/...` URL is rejected on the client side even though this server accepts it in development.
 
-Against a deployed Worker:
+Against the live Worker:
 
 ```bash
-npx @modelcontextprotocol/inspector --server-url https://<your-worker>/mcp --transport http \
-  --client-metadata-url https://<your-worker>/examples/inspector-web.json
+npx @modelcontextprotocol/inspector \
+  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
+  --transport http \
+  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json
 ```
 
 The Worker serves that document with `client_id` equal to its own URL and the Inspector web default redirect. For the CLI or TUI use `/examples/inspector-cli.json`.
