@@ -16,7 +16,7 @@
     // Public base URL of this Worker. Leave empty to derive it from each request
     // (fine for `wrangler dev` and *.workers.dev). Set it explicitly behind a
     // custom domain or a proxy, for example "https://mcp.example.com".
-    "ISSUER": "",
+    "ISSUER": "https://cimd-mcp-reference.andrea-oauth-demos.workers.dev",
     // Accept http://127.0.0.1 and http://localhost client_id URLs. Only honoured
     // when the issuer itself is a loopback address. Set in .dev.vars for local
     // development; never needed in production.

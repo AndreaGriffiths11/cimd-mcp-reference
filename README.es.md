@@ -4,7 +4,26 @@ Un servidor MCP remoto en Cloudflare Workers que autentica clientes con OAuth us
 
 De [Andrea Griffiths](https://github.com/AndreaGriffiths11). MIT. [English](README.md).
 
-## Pruébalo en dos minutos
+Página pública (cuando GitHub Pages esté activo): https://andreagriffiths11.github.io/cimd-mcp-reference/?lang=es
+
+Worker en vivo: https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp
+
+Esa URL anuncia `"client_id_metadata_document_supported": true`. Cualquiera puede abrir la pantalla de consentimiento, así que define `CONSENT_PASSWORD` si aún no lo has hecho:
+
+```bash
+npx wrangler secret put CONSENT_PASSWORD
+```
+
+Pruébalo con MCP Inspector (sin servidor local):
+
+```bash
+npx @modelcontextprotocol/inspector \
+  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
+  --transport http \
+  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json
+```
+
+## Pruébalo en local en dos minutos
 
 Requiere Node.js 20.11 o superior.
 
@@ -94,7 +113,7 @@ Comprobación: abre `https://<tu-worker>/.well-known/oauth-authorization-server`
 | Cliente | CIMD hoy | Notas |
 | --- | --- | --- |
 | Cliente de ejemplo de este repo | Sí | Verificado contra `wrangler dev` el 8 oct 2026 |
-| MCP Inspector 2.x | Sí | `--client-metadata-url https://<tu-worker>/examples/inspector-web.json`. La URL debe ser HTTPS: usa un Worker desplegado o un túnel |
+| MCP Inspector 2.x | Sí | Contra el Worker en vivo: `--client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json` |
 | Claude Code | Sí | Sus metadatos por defecto usan redirecciones loopback sin puerto; la coincidencia exacta de este servidor las rechaza. Ver [docs/clients.md](docs/clients.md) |
 | Claude.ai, Desktop, Cowork | Observado sí (mayo 2026) | Necesita un Worker público HTTPS |
 | Cursor, Windsurf | Solo DCR (mayo 2026) | Fallan salvo `ENABLE_DEPRECATED_DCR=true` o que hayan añadido CIMD desde entonces |
