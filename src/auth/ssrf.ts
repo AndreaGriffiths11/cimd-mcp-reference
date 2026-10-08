@@ -116,7 +116,8 @@ const SPECIAL_V6: Array<{ prefix: number[]; bits: number }> = [
   { prefix: parseIPv6("64:ff9b::")!, bits: 96 }, // IPv4/IPv6 translation
   { prefix: parseIPv6("64:ff9b:1::")!, bits: 48 }, // local-use translation
   { prefix: parseIPv6("100::")!, bits: 64 }, // discard-only
-  { prefix: parseIPv6("2001::")!, bits: 23 }, // IETF protocol assignments (TEREDO, ORCHID, benchmarking, documentation)
+  { prefix: parseIPv6("2001::")!, bits: 23 }, // IETF protocol assignments (TEREDO, ORCHID, benchmarking)
+  { prefix: parseIPv6("2001:db8::")!, bits: 32 }, // documentation
   { prefix: parseIPv6("2002::")!, bits: 16 }, // 6to4
   { prefix: parseIPv6("fc00::")!, bits: 7 }, // unique local
   { prefix: parseIPv6("fe80::")!, bits: 10 }, // link local

@@ -60,7 +60,8 @@ export async function readForm(request: Request): Promise<URLSearchParams> {
   if (!type.toLowerCase().startsWith("application/x-www-form-urlencoded")) {
     throw new FormError("Content-Type must be application/x-www-form-urlencoded");
   }
-  return new URLSearchParams(await request.text());
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  return new URLSearchParams(new TextDecoder().decode(bytes));
 }
 
 export class FormError extends Error {}
