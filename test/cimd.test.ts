@@ -293,4 +293,22 @@ describe("fetching the document", () => {
     const result = await fetchClientMetadata(local, DEV, d);
     expect(result.metadata.client_id).toBe(local.href);
   });
+
+  it("validates a localDocument without fetching, and still rejects a local document that fails CIMD rules", async () => {
+    const { d, calls } = deps({});
+    d.fetch = (async () => {
+      throw new Error("must not fetch");
+    }) as typeof fetch;
+    d.resolve = async () => {
+      throw new Error("must not resolve");
+    };
+    d.localDocument = () => validDocument();
+    const ok = await fetchClientMetadata(url, PUBLIC, d);
+    expect(ok.metadata.client_name).toBe("Example MCP Client");
+    expect(ok.fromCache).toBe(false);
+    expect(calls).toHaveLength(0);
+
+    d.localDocument = () => validDocument({ client_id: "https://other.example.com/client.json" });
+    await expect(fetchClientMetadata(url, PUBLIC, d)).rejects.toThrow(/does not match the document URL/);
+  });
 });

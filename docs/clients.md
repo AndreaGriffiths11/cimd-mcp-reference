@@ -27,7 +27,7 @@ npx @modelcontextprotocol/inspector \
   --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json
 ```
 
-The Worker serves that document with `client_id` equal to its own URL and the Inspector web default redirect. For the CLI or TUI use `/examples/inspector-cli.json`.
+The Worker serves that document with `client_id` equal to its own URL and the Inspector web default redirect. For the CLI or TUI use `/examples/inspector-cli.json`. When `client_id` is this Worker's own example URL, authorization builds the document in-process (a Worker cannot `fetch()` its own `workers.dev` hostname) and still runs the same CIMD validators. Third-party `client_id` URLs are still fetched over the network.
 
 Against local `wrangler dev`: either put a Cloudflare Tunnel in front so both the issuer and the metadata URL are HTTPS, or host `examples/cimd/inspector-web.json` at any HTTPS URL, set its `client_id` to that URL, and pass it as `--client-metadata-url`.
 

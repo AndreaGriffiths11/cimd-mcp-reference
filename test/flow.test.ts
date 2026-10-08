@@ -168,6 +168,52 @@ describe("discovery", () => {
     expect(doc.redirect_uris).toEqual(["http://localhost:6274/oauth/callback"]);
   });
 
+  it("authorizes the hosted Inspector example documents without fetching them over the network", async () => {
+    for (const [path, redirect] of [
+      ["/examples/inspector-web.json", "http://localhost:6274/oauth/callback"],
+      ["/examples/inspector-cli.json", "http://127.0.0.1:6276/oauth/callback"],
+    ] as const) {
+      const clientId = `${ISSUER}${path}`;
+      const page = await SELF.fetch(authorizeUrl({ client_id: clientId, redirect_uri: redirect }));
+      expect(page.status).toBe(200);
+      const body = await page.text();
+      expect(body).not.toContain("Client could not be verified");
+      expect(body).toContain("MCP Inspector");
+      expect(body).toContain(clientId);
+      expect(body).toContain("Allow");
+      expect(body).not.toContain('type="password"');
+    }
+  });
+
+  it("still fetches third-party and unknown same-origin client_id URLs over the network", async () => {
+    const unknown = await SELF.fetch(
+      authorizeUrl({ client_id: `${ISSUER}/examples/not-a-client.json`, redirect_uri: "http://localhost:6274/oauth/callback" }),
+    );
+    expect(unknown.status).toBe(400);
+    expect(await unknown.text()).toContain("client metadata document returned HTTP 404");
+  });
+
+  it("still shows the consent password field after verifying a hosted example client", async () => {
+    const previous = env.CONSENT_PASSWORD;
+    env.CONSENT_PASSWORD = "test-password";
+    try {
+      const page = await SELF.fetch(
+        authorizeUrl({
+          client_id: `${ISSUER}/examples/inspector-web.json`,
+          redirect_uri: "http://localhost:6274/oauth/callback",
+        }),
+      );
+      expect(page.status).toBe(200);
+      const body = await page.text();
+      expect(body).toContain("MCP Inspector (web)");
+      expect(body).toContain('type="password"');
+      expect(body).toContain("Consent password");
+    } finally {
+      if (previous === undefined) delete env.CONSENT_PASSWORD;
+      else env.CONSENT_PASSWORD = previous;
+    }
+  });
+
   it("answers OPTIONS preflight on public endpoints", async () => {
     const response = await SELF.fetch(`${ISSUER}/token`, { method: "OPTIONS", headers: { Origin: "https://x.example" } });
     expect(response.status).toBe(204);

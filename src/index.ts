@@ -1,6 +1,7 @@
 import { requireBearerAuth } from "@modelcontextprotocol/server";
 import { handleAuthorize, handleDecision } from "./auth/authorize.js";
 import { handleRegister } from "./auth/dcr.js";
+import { buildExampleClientMetadata, INSPECTOR_CLI_PATH, INSPECTOR_WEB_PATH } from "./auth/example-clients.js";
 import { authorizationServerMetadata, protectedResourceMetadata } from "./auth/metadata.js";
 import { handleRevoke, handleToken } from "./auth/token.js";
 import { type Config, type Env, isLoopbackHostname, MCP_PATH, REQUIRED_SCOPE, resolveConfig } from "./env.js";
@@ -26,8 +27,8 @@ export default {
       "/token",
       "/revoke",
       "/register",
-      "/examples/inspector-web.json",
-      "/examples/inspector-cli.json",
+      INSPECTOR_WEB_PATH,
+      INSPECTOR_CLI_PATH,
     ]);
     if (request.method === "OPTIONS" && corsRoutes.has(path)) return preflight(request);
 
@@ -66,14 +67,9 @@ async function route(request: Request, env: Env, config: Config, path: string): 
 
     // Sample Client ID Metadata Documents. The client_id is this request's
     // URL so a deployed copy and a local wrangler each produce a matching document.
-    case "/examples/inspector-web.json":
-      return request.method === "GET"
-        ? exampleClientMetadata(request, "MCP Inspector (web)", ["http://localhost:6274/oauth/callback"])
-        : methodNotAllowed("GET");
-    case "/examples/inspector-cli.json":
-      return request.method === "GET"
-        ? exampleClientMetadata(request, "MCP Inspector (CLI/TUI)", ["http://127.0.0.1:6276/oauth/callback"])
-        : methodNotAllowed("GET");
+    case INSPECTOR_WEB_PATH:
+    case INSPECTOR_CLI_PATH:
+      return request.method === "GET" ? exampleClientMetadata(request) : methodNotAllowed("GET");
 
     default:
       return json({ error: "not_found" }, { status: 404 });
@@ -131,18 +127,12 @@ function metadata(document: Record<string, unknown>): Response {
   return json(document, { status: 200 }, { "Cache-Control": "public, max-age=300" });
 }
 
-function exampleClientMetadata(request: Request, clientName: string, redirectUris: string[]): Response {
+function exampleClientMetadata(request: Request): Response {
   const url = new URL(request.url);
   const clientId = `${url.origin}${url.pathname}`;
-  return metadata({
-    client_id: clientId,
-    client_name: clientName,
-    client_uri: "https://modelcontextprotocol.io/docs/tools/inspector",
-    redirect_uris: redirectUris,
-    grant_types: ["authorization_code", "refresh_token"],
-    response_types: ["code"],
-    token_endpoint_auth_method: "none",
-  });
+  const document = buildExampleClientMetadata(clientId);
+  if (!document) return json({ error: "not_found" }, { status: 404 });
+  return metadata(document);
 }
 
 function methodNotAllowed(allow: string): Response {

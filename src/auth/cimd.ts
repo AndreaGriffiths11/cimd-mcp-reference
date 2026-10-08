@@ -204,6 +204,12 @@ export interface FetchClientMetadataDeps {
   };
   now?: () => number;
   limits?: Partial<typeof CIMD_LIMITS>;
+  /**
+   * When this returns a document, it is validated with the same rules as a
+   * fetched body and the network is not used. Used only for this Worker's own
+   * example Inspector documents (a Worker cannot fetch its own workers.dev URL).
+   */
+  localDocument?: (url: URL) => unknown | undefined;
 }
 
 export interface FetchClientMetadataResult {
@@ -229,6 +235,11 @@ export async function fetchClientMetadata(
   const cached = await deps.cache.get(clientId);
   if (cached && cached.expiresAt > now()) {
     return { metadata: validateClientMetadataDocument(cached.document, clientId), fromCache: true };
+  }
+
+  const local = deps.localDocument?.(clientIdUrl);
+  if (local !== undefined) {
+    return { metadata: validateClientMetadataDocument(local, clientId), fromCache: false };
   }
 
   await assertResolvesToPublicAddress(clientIdUrl, policy, deps.resolve);
