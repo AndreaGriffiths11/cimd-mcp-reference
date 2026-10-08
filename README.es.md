@@ -8,11 +8,7 @@ Página pública (cuando GitHub Pages esté activo): https://andreagriffiths11.g
 
 Worker en vivo: https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp
 
-Esa URL anuncia `"client_id_metadata_document_supported": true`. Cualquiera puede abrir la pantalla de consentimiento, así que define `CONSENT_PASSWORD` si aún no lo has hecho:
-
-```bash
-npx wrangler secret put CONSENT_PASSWORD
-```
+Esa URL anuncia `"client_id_metadata_document_supported": true`. La demo alojada tiene la pantalla de consentimiento abierta, sin contraseña, a propósito, para que cualquiera pueda probar el flujo CIMD completo. Los tokens solo llegan a las herramientas de demostración (`whoami`, `current_time`, `add_note`, `list_notes`) y a las notas de demostración.
 
 Pruébalo con MCP Inspector (sin servidor local):
 
@@ -104,7 +100,7 @@ npx wrangler login
 npx wrangler deploy
 ```
 
-Después pon `ISSUER` en `wrangler.jsonc` con tu URL pública (por ejemplo `https://cimd-mcp-reference.<cuenta>.workers.dev`) y despliega de nuevo. Opcional: `npx wrangler secret put CONSENT_PASSWORD` para proteger la pantalla de consentimiento.
+Después pon `ISSUER` en `wrangler.jsonc` con tu URL pública (por ejemplo `https://cimd-mcp-reference.<cuenta>.workers.dev`) y despliega de nuevo. `CONSENT_PASSWORD` es un secreto opcional del Worker que bloquea la pantalla de consentimiento. Un servidor real debería usar un login de usuario real.
 
 Comprobación: abre `https://<tu-worker>/.well-known/oauth-authorization-server` y busca `"client_id_metadata_document_supported": true`.
 
@@ -125,7 +121,7 @@ Detalles y comandos: [docs/clients.md](docs/clients.md) (en inglés).
 - Los tokens van ligados a `{issuer}/mcp`. Cualquier otra cosa es un 401.
 - Códigos y refresh tokens son de un solo uso. Reutilizar un refresh token revoca la concesión.
 - Las descargas de metadatos nunca siguen redirecciones, limitan tamaño y tiempo y rechazan direcciones privadas.
-- Un único usuario de demostración (`demo-user`). Define `CONSENT_PASSWORD` si el Worker es público. Esto es una referencia, no un proveedor de identidad.
+- Un único usuario de demostración (`demo-user`). La demo alojada deja la pantalla de consentimiento abierta para que se pueda probar el flujo CIMD. Los tokens solo llegan a las herramientas y notas de demostración. En tu propia copia, `CONSENT_PASSWORD` es un secreto opcional del Worker que bloquea el consentimiento. Un servidor real debería usar un login de usuario real.
 - No hay secretos en el repositorio. `.dev.vars` solo habilita CIMD loopback para `wrangler dev`.
 
 Más: [docs/security.md](docs/security.md) (en inglés).

@@ -31,7 +31,7 @@ The consent screen is the trust UI. It shows the `client_id` host and the redire
 
 ## Identity
 
-There is one demo resource owner, `demo-user`. Set `CONSENT_PASSWORD` if the Worker is reachable by anyone but you. This is a reference for the client-identity side of OAuth, not an identity provider.
+There is one demo resource owner, `demo-user`. The hosted demo has an open consent screen with no password on purpose. Anyone can try the full CIMD flow. Tokens only reach demo tools and demo notes. `CONSENT_PASSWORD` is an optional Worker secret that gates the consent screen on a copy you deploy. A real server should use real user login.
 
 ## Secrets
 
