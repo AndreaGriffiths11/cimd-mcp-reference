@@ -1,144 +1,90 @@
 # CIMD MCP reference server
 
-A remote MCP server on Cloudflare Workers that logs clients in with OAuth, using a **Client ID Metadata Document (CIMD)** instead of app registration. No developer portal, no `client_secret`, no `POST /register`.
+A remote MCP server on Cloudflare Workers that accepts OAuth clients identified by a Client ID Metadata Document (CIMD). It is for MCP server developers who want clients to connect without a developer portal or pre-registration.
 
-By [Andrea Griffiths](https://github.com/AndreaGriffiths11). MIT. [Español](README.es.md).
+Explainer page: https://andreagriffiths11.github.io/cimd-mcp-reference/
 
-Public page (once GitHub Pages is on): https://andreagriffiths11.github.io/cimd-mcp-reference/
+[Español](README.es.md)
 
-Live Worker: https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp
+## Try the live demo
 
-That URL advertises `"client_id_metadata_document_supported": true`. The hosted demo has an open consent screen with no password on purpose, so anyone can try the full CIMD flow. Tokens only reach the demo tools (`whoami`, `current_time`, `add_note`, `list_notes`) and demo notes.
+The demo runs at https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp. It has no password.
 
-Try it with MCP Inspector (no local server needed):
+Run MCP Inspector against it:
 
 ```bash
-npx @modelcontextprotocol/inspector \
-  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
-  --transport http \
-  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json
+npx @modelcontextprotocol/inspector --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp --transport http --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json
 ```
 
-## Try it locally in two minutes
+Inspector opens in your browser. Connect, and the server shows a consent screen for "MCP Inspector (web)". Click Allow. Inspector gets a token and lists four tools: `whoami`, `current_time`, `add_note`, `list_notes`.
 
-Requires Node.js 20.11+.
+Tokens from the demo only reach these demo tools and demo notes.
+
+## How CIMD works here
+
+1. The client calls `/mcp` without a token and gets a 401. The `WWW-Authenticate` header points to the protected resource metadata (RFC 9728).
+2. The client reads that metadata, then the authorization server metadata (RFC 8414). It advertises `client_id_metadata_document_supported: true` and PKCE `S256`.
+3. The client sends its `client_id` to `/authorize`. The `client_id` is an HTTPS URL to a JSON document that lists the client's name and redirect URIs.
+4. The server fetches that document, checks that its `client_id` equals the URL, and checks the `redirect_uri` against its list. The fetch has SSRF guards.
+5. The user approves on the consent screen. The client exchanges the code at `/token` with its PKCE verifier and the `resource` parameter (RFC 8707).
+6. The access token is bound to `/mcp` on this server. The client uses it to call tools.
+
+Dynamic Client Registration (RFC 7591) is deprecated in the MCP spec. It is off by default here.
+
+This is a teaching demo. It has one demo user and no real login.
+
+## Run it locally
+
+Requires Node.js 20.11 or newer.
 
 ```bash
-git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
-cd cimd-mcp-reference
 npm install
-npm run dev                      # terminal 1: server on http://localhost:8787
-node examples/client/cimd-client.mjs   # terminal 2: full login + tool call
 ```
-
-The client opens your browser on a consent screen. Click **Approve**. The terminal then shows `whoami` reporting `client_registration: "client-id-metadata-document"`, a saved note, and a token refresh.
-
-Flags: `--auto-consent` approves without a browser (local only), `--no-browser` prints the URL instead of opening it.
 
 ```bash
-npm test          # 120 tests
-npm run typecheck
+npm run dev
 ```
 
-## What CIMD is
+In a second terminal:
 
-In OAuth the server normally needs to know your app before it will talk to you. MCP clients connect to servers they have never seen, so that model breaks.
-
-CIMD makes the `client_id` an **HTTPS URL**. That URL hosts a small JSON file:
-
-```json
-{
-  "client_id": "https://app.example.com/client.json",
-  "client_name": "Example MCP Client",
-  "redirect_uris": ["http://127.0.0.1:3000/callback"],
-  "token_endpoint_auth_method": "none"
-}
+```bash
+node examples/client/cimd-client.mjs
 ```
 
-The authorization server fetches that file during login, checks `client_id` equals the URL, and uses `redirect_uris` as the registered list. Nothing is stored about the client ahead of time.
+The server runs at http://localhost:8787. The example client hosts its own metadata document on loopback, opens the consent screen in your browser, gets a token, and calls the tools.
 
-MCP 2026-07-28 recommends CIMD and [deprecates Dynamic Client Registration](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration#dynamic-client-registration) (RFC 7591). As of 3 October 2026, [2 of 181 official MCP servers](https://x.com/McpMetrics/status/2106479518357635450) advertised CIMD. This repo is a working server-side example.
+Run the type check and tests:
 
-## The flow
-
-```mermaid
-sequenceDiagram
-    participant C as MCP client
-    participant W as This Worker
-    participant D as client.json (client's URL)
-
-    C->>W: POST /mcp (no token)
-    W-->>C: 401 + WWW-Authenticate resource_metadata
-    C->>W: GET /.well-known/oauth-protected-resource/mcp
-    C->>W: GET /.well-known/oauth-authorization-server
-    C->>W: GET /authorize?client_id=https://.../client.json
-    W->>D: GET client.json
-    W-->>C: consent screen, user approves, redirect with code
-    C->>W: POST /token (code + PKCE verifier + resource)
-    W-->>C: access_token
-    C->>W: POST /mcp with Bearer token
+```bash
+npm run check
 ```
 
-## What it implements
+## Deploy your own copy
 
-| Area | Details |
-| --- | --- |
-| Discovery | RFC 9728 resource metadata, RFC 8414 server metadata with `client_id_metadata_document_supported: true`, 401 challenge with `resource_metadata` |
-| Client identity | CIMD only by default. HTTPS URL `client_id`, exact `redirect_uri` match, 5 KiB limit, 5 s timeout, no redirects, JSON content type |
-| SSRF guard | IP literals and private names refused; DNS resolved over HTTPS, every address checked against RFC 6890 |
-| Consent | Shows client name, `client_id` host, redirect host, scopes; warns on loopback redirects |
-| Tokens | Authorization code + PKCE S256, RFC 8707 `resource`, audience-bound opaque tokens, rotating refresh tokens, RFC 7009 revoke, RFC 9207 `iss` |
-| MCP | Streamable HTTP at `/mcp`, protocol 2026-07-28, tools `whoami` `current_time` `add_note` `list_notes` |
-| Deprecated DCR | `POST /register` exists behind `ENABLE_DEPRECATED_DCR=true`, off by default, answers with `Deprecation: true` |
-
-Full endpoint and config reference: [docs/reference.md](docs/reference.md).
-
-## Deploy your own
+Log in to Cloudflare:
 
 ```bash
 npx wrangler login
-npx wrangler deploy
 ```
 
-Then set `ISSUER` in `wrangler.jsonc` to your public URL (for example `https://cimd-mcp-reference.<account>.workers.dev`) and deploy again. `CONSENT_PASSWORD` is an optional Worker secret that gates the consent screen. A real server should use real user login.
+Set `ISSUER` in `wrangler.jsonc` to your Worker's URL, for example `https://cimd-mcp-reference.<your-subdomain>.workers.dev`. Then deploy:
 
-Check it worked: open `https://<your-worker>/.well-known/oauth-authorization-server` and look for `"client_id_metadata_document_supported": true`.
-
-## Connect a real client
-
-| Client | CIMD today | Notes |
-| --- | --- | --- |
-| This repo's example client | Yes | Verified against `wrangler dev` on 8 Oct 2026 |
-| MCP Inspector 2.x | Yes | Against the live Worker: `--client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json` |
-| Claude Code | Yes | Its default metadata uses portless loopback redirects; this server's exact match will reject it. See [docs/clients.md](docs/clients.md) |
-| Claude.ai, Desktop, Cowork | Observed yes (May 2026) | Needs a public HTTPS Worker |
-| Cursor, Windsurf | DCR only (May 2026) | Fail unless `ENABLE_DEPRECATED_DCR=true` or they have added CIMD since |
-
-Details and commands: [docs/clients.md](docs/clients.md).
-
-## Security notes
-
-- Tokens are bound to `{issuer}/mcp`. Anything else is a 401.
-- Codes and refresh tokens are single-use. Replaying a refresh token revokes the grant.
-- Metadata fetches never follow redirects, cap size and time, and refuse private addresses.
-- One demo user (`demo-user`). The hosted demo leaves the consent screen open so people can try the CIMD flow. Tokens only reach demo tools and demo notes. On your own copy, `CONSENT_PASSWORD` is an optional Worker secret that gates consent. A real server should use real user login.
-- No secrets in the repo. `.dev.vars` only enables loopback CIMD for `wrangler dev`.
-
-More: [docs/security.md](docs/security.md).
-
-## Layout
-
-```
-src/index.ts         router
-src/auth/            CIMD, PKCE, metadata, consent, token, optional DCR
-src/mcp/             MCP endpoint and demo tools
-src/store/           Durable Object: codes, tokens, CIMD cache
-examples/client/     example client
-examples/cimd/       sample Inspector metadata documents
-test/                CIMD, SSRF, PKCE, audience, full Worker flow
-docs/                reference, clients, security
+```bash
+npm run deploy
 ```
 
-## Specs
+To require a password on the consent screen, set the optional `CONSENT_PASSWORD` secret:
 
-[MCP authorization 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization) · [Client registration](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration) · [CIMD draft-01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-01) · [RFC 8414](https://www.rfc-editor.org/rfc/rfc8414) · [RFC 8707](https://www.rfc-editor.org/rfc/rfc8707) · [RFC 9207](https://www.rfc-editor.org/rfc/rfc9207) · [RFC 9728](https://www.rfc-editor.org/rfc/rfc9728)
+```bash
+npx wrangler secret put CONSENT_PASSWORD
+```
+
+A real server should use real user login.
+
+## More detail
+
+- [docs/reference.md](docs/reference.md): endpoints, CIMD rules, tokens, configuration
+- [docs/clients.md](docs/clients.md): MCP Inspector, Claude, Cursor, and other clients
+- [docs/security.md](docs/security.md): SSRF guards, token binding, consent screen
+
+MIT license. By [Andrea Griffiths](https://github.com/AndreaGriffiths11).
