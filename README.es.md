@@ -4,6 +4,8 @@ Un servidor MCP remoto en Cloudflare Workers que autentica clientes con OAuth us
 
 De [Andrea Griffiths](https://github.com/AndreaGriffiths11). MIT. [English](README.md).
 
+Página pública (cuando GitHub Pages esté activo): https://andreagriffiths11.github.io/cimd-mcp-reference/?lang=es
+
 ## Pruébalo en dos minutos
 
 Requiere Node.js 20.11 o superior.

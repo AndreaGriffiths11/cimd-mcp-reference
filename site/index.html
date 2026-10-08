@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CIMD MCP reference server</title>
+  <meta name="description" content="A reference remote MCP server that accepts OAuth clients identified by a Client ID Metadata Document. No developer portal.">
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --ink: #1c1917;
+      --muted: #57534e;
+      --card: #fffdf9;
+      --line: #d6d3d1;
+      --accent: #0f3d3e;
+      --code: #ece7df;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 1.05rem/1.55 "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
+    }
+    header, main, footer { max-width: 42rem; margin: 0 auto; padding: 1.25rem 1.25rem 0; }
+    footer { padding-bottom: 3rem; color: var(--muted); font-size: 0.95rem; }
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 1rem;
+    }
+    .langs { display: flex; gap: 0.35rem; }
+    .langs button {
+      font: 0.85rem/1 system-ui, sans-serif;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .langs button[aria-pressed="true"] {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    h1 { font-size: 2rem; line-height: 1.2; margin: 1.5rem 0 0.5rem; }
+    h2 { font-size: 1.25rem; margin: 2rem 0 0.6rem; }
+    p, li { color: var(--ink); }
+    .lede { font-size: 1.15rem; }
+    .muted, .note { color: var(--muted); }
+    a { color: var(--accent); }
+    pre, code { font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace; font-size: 0.88rem; }
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      overflow-x: auto;
+    }
+    .diagram {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .diagram .mermaid { margin: 0; }
+    ul.docs { padding-left: 1.2rem; }
+    .repo {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+    }
+    .repo code { word-break: break-all; }
+    [hidden] { display: none !important; }
+    @media (max-width: 640px) {
+      h1 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="top">
+      <span class="muted" id="byline">Andrea Griffiths · MIT</span>
+      <div class="langs" role="group" aria-label="Language">
+        <button type="button" id="btn-en" aria-pressed="true">English</button>
+        <button type="button" id="btn-es" aria-pressed="false">Español</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <article id="en" lang="en">
+      <h1>CIMD MCP reference server</h1>
+      <p class="lede">A remote MCP server on Cloudflare Workers that accepts OAuth clients identified by a Client ID Metadata Document. No developer portal, no <code>client_secret</code>, no <code>POST /register</code>.</p>
+      <p class="note">This page is documentation. There is no live demo server here. Run the Worker locally, or deploy your own copy, to try the flow.</p>
+
+      <h2>What this is</h2>
+      <p>MCP clients talk to servers they have never seen. Classic OAuth assumes the server already knows the app. That is why MCP used Dynamic Client Registration (DCR, RFC 7591): the client posted to <code>/register</code> and the server minted a <code>client_id</code>.</p>
+      <p>MCP 2026-07-28 deprecates DCR and recommends CIMD instead. The <code>client_id</code> is an HTTPS URL. That URL hosts a small JSON file the authorization server fetches at login. Nothing about the client is stored ahead of time.</p>
+      <pre>{
+  "client_id": "https://app.example.com/client.json",
+  "client_name": "Example MCP Client",
+  "redirect_uris": ["http://127.0.0.1:3000/callback"],
+  "token_endpoint_auth_method": "none"
+}</pre>
+      <p>This repository is a working server-side example of that path: discovery, CIMD fetch with SSRF guards, consent, PKCE tokens, and a Streamable HTTP MCP endpoint.</p>
+
+      <h2>Why CIMD replaces DCR</h2>
+      <p>DCR lets any caller create a client on your authorization server. That is convenient for first contact and expensive as a trust model: the server learns nothing durable about who the client is, and <code>/register</code> becomes an open write endpoint.</p>
+      <p>With CIMD the client already has an identity (the HTTPS URL of its metadata). The server checks that the document's <code>client_id</code> equals that URL and that the request <code>redirect_uri</code> is on the document's list. The client hosts the file. The server does not keep a developer-portal registry.</p>
+      <p>As of 3 October 2026, 2 of 181 official MCP servers advertised CIMD. This project exists so the server side of that spec is copyable.</p>
+
+      <h2>The flow</h2>
+      <div class="diagram">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as MCP client
+    participant W as This Worker
+    participant D as client.json
+    C->>W: POST /mcp (no token)
+    W-->>C: 401 + resource_metadata
+    C->>W: GET protected resource metadata
+    C->>W: GET authorization server metadata
+    C->>W: GET /authorize?client_id=https://.../client.json
+    W->>D: GET client.json
+    W-->>C: consent, then redirect with code
+    C->>W: POST /token (code + PKCE + resource)
+    W-->>C: access_token
+    C->>W: POST /mcp with Bearer token
+        </pre>
+      </div>
+
+      <h2>Quick start</h2>
+      <p>Requires Node.js 20.11 or newer. This runs on your machine. It does not use a hosted Worker.</p>
+      <pre>git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
+cd cimd-mcp-reference
+npm install
+npm run dev
+node examples/client/cimd-client.mjs</pre>
+      <p>Terminal 1 is the server at <code>http://localhost:8787</code>. Terminal 2 opens a consent screen. Click Approve. The client then calls <code>whoami</code>, saves a note, and refreshes the token.</p>
+      <p><code>--auto-consent</code> approves without a browser (local only). <code>--no-browser</code> prints the URL instead of opening it. <code>npm test</code> runs 120 tests. <code>npm run typecheck</code> typechecks.</p>
+
+      <h2>Docs in the repository</h2>
+      <p class="note">These paths open on GitHub once the repository is public. They 404 while it stays private.</p>
+      <ul class="docs">
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/README.md">README.md</a> (English)</li>
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/README.es.md">README.es.md</a> (Español)</li>
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/reference.md">docs/reference.md</a> endpoints, CIMD rules, config</li>
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/clients.md">docs/clients.md</a> Inspector, Claude, Cursor, Windsurf</li>
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/security.md">docs/security.md</a> tokens, SSRF, consent</li>
+      </ul>
+
+      <h2>Repository</h2>
+      <div class="repo">
+        <p>The source is on GitHub. The repository is private today, so this URL will not open for most readers until the owner publishes it.</p>
+        <p><code>https://github.com/AndreaGriffiths11/cimd-mcp-reference</code></p>
+      </div>
+
+      <h2>Specs</h2>
+      <p>
+        <a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization">MCP authorization 2026-07-28</a>
+        · <a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration">Client registration</a>
+        · <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-01">CIMD draft-01</a>
+        · <a href="https://www.rfc-editor.org/rfc/rfc8414">RFC 8414</a>
+        · <a href="https://www.rfc-editor.org/rfc/rfc8707">RFC 8707</a>
+        · <a href="https://www.rfc-editor.org/rfc/rfc9207">RFC 9207</a>
+        · <a href="https://www.rfc-editor.org/rfc/rfc9728">RFC 9728</a>
+      </p>
+    </article>
+
+    <article id="es" lang="es" hidden>
+      <h1>Servidor MCP de referencia con CIMD</h1>
+      <p class="lede">Un servidor MCP remoto en Cloudflare Workers que acepta clientes OAuth identificados por un Client ID Metadata Document. Sin portal de desarrolladores, sin <code>client_secret</code>, sin <code>POST /register</code>.</p>
+      <p class="note">Esta página es documentación. No hay un servidor de demostración en vivo aquí. Ejecuta el Worker en local, o despliega tu propia copia, para probar el flujo.</p>
+
+      <h2>Qué es esto</h2>
+      <p>Los clientes MCP hablan con servidores que nunca han visto. OAuth clásico asume que el servidor ya conoce la aplicación. Por eso MCP usaba Dynamic Client Registration (DCR, RFC 7591): el cliente hacía POST a <code>/register</code> y el servidor emitía un <code>client_id</code>.</p>
+      <p>MCP 2026-07-28 depreca DCR y recomienda CIMD. El <code>client_id</code> es una URL HTTPS. Esa URL aloja un JSON pequeño que el servidor de autorización descarga en el login. No se guarda nada del cliente por adelantado.</p>
+      <pre>{
+  "client_id": "https://app.example.com/client.json",
+  "client_name": "Example MCP Client",
+  "redirect_uris": ["http://127.0.0.1:3000/callback"],
+  "token_endpoint_auth_method": "none"
+}</pre>
+      <p>Este repositorio es un ejemplo funcional del lado servidor: descubrimiento, descarga CIMD con protecciones SSRF, consentimiento, tokens PKCE y un endpoint MCP Streamable HTTP.</p>
+
+      <h2>Por qué CIMD sustituye a DCR</h2>
+      <p>DCR permite que cualquiera cree un cliente en tu servidor de autorización. Es cómodo para el primer contacto y caro como modelo de confianza: el servidor no aprende nada durable sobre quién es el cliente, y <code>/register</code> queda como un endpoint de escritura abierto.</p>
+      <p>Con CIMD el cliente ya tiene identidad (la URL HTTPS de sus metadatos). El servidor comprueba que el <code>client_id</code> del documento es esa URL y que el <code>redirect_uri</code> de la petición está en la lista del documento. El cliente aloja el archivo. El servidor no mantiene un registro tipo portal de desarrolladores.</p>
+      <p>A 3 de octubre de 2026, 2 de 181 servidores MCP oficiales anunciaban CIMD. Este proyecto existe para que el lado servidor de esa especificación se pueda copiar.</p>
+
+      <h2>El flujo</h2>
+      <div class="diagram">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as Cliente MCP
+    participant W as Este Worker
+    participant D as client.json
+    C->>W: POST /mcp (sin token)
+    W-->>C: 401 + resource_metadata
+    C->>W: GET metadatos del recurso
+    C->>W: GET metadatos del servidor
+    C->>W: GET /authorize?client_id=https://.../client.json
+    W->>D: GET client.json
+    W-->>C: consentimiento, luego redirección con code
+    C->>W: POST /token (code + PKCE + resource)
+    W-->>C: access_token
+    C->>W: POST /mcp con token Bearer
+        </pre>
+      </div>
+
+      <h2>Inicio rápido</h2>
+      <p>Requiere Node.js 20.11 o superior. Esto corre en tu máquina. No usa un Worker alojado.</p>
+      <pre>git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
+cd cimd-mcp-reference
+npm install
+npm run dev
+node examples/client/cimd-client.mjs</pre>
+      <p>La terminal 1 es el servidor en <code>http://localhost:8787</code>. La terminal 2 abre una pantalla de consentimiento. Pulsa Approve. El cliente llama a <code>whoami</code>, guarda una nota y renueva el token.</p>
+      <p><code>--auto-consent</code> aprueba sin navegador (solo local). <code>--no-browser</code> imprime la URL en lugar de abrirla. <code>npm test</code> ejecuta 120 pruebas. <code>npm run typecheck</code> comprueba tipos.</p>
+
+      <h2>Documentación en el repositorio</h2>
+      <p class="note">Estas rutas se abren en GitHub cuando el repositorio sea público. Mientras sea privado, dan 404.</p>
+      <ul class="docs">
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/README.md">README.md</a> (English)</li>
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/README.es.md">README.es.md</a> (Español)</li>
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/reference.md">docs/reference.md</a> endpoints, reglas CIMD, configuración (en inglés)</li>
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/clients.md">docs/clients.md</a> Inspector, Claude, Cursor, Windsurf (en inglés)</li>
+        <li><a href="https://github.com/AndreaGriffiths11/cimd-mcp-reference/blob/main/docs/security.md">docs/security.md</a> tokens, SSRF, consentimiento (en inglés)</li>
+      </ul>
+
+      <h2>Repositorio</h2>
+      <div class="repo">
+        <p>El código está en GitHub. El repositorio es privado hoy, así que esta URL no se abrirá para la mayoría de lectores hasta que la dueña lo publique.</p>
+        <p><code>https://github.com/AndreaGriffiths11/cimd-mcp-reference</code></p>
+      </div>
+
+      <h2>Especificaciones</h2>
+      <p>
+        <a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization">Autorización MCP 2026-07-28</a>
+        · <a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration">Registro de clientes</a>
+        · <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-01">CIMD draft-01</a>
+        · <a href="https://www.rfc-editor.org/rfc/rfc8414">RFC 8414</a>
+        · <a href="https://www.rfc-editor.org/rfc/rfc8707">RFC 8707</a>
+        · <a href="https://www.rfc-editor.org/rfc/rfc9207">RFC 9207</a>
+        · <a href="https://www.rfc-editor.org/rfc/rfc9728">RFC 9728</a>
+      </p>
+    </article>
+  </main>
+
+  <footer>
+    <p>Andrea Griffiths. MIT. Not a hosted MCP server.</p>
+  </footer>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "neutral",
+      securityLevel: "strict",
+    });
+
+    const en = document.getElementById("en");
+    const es = document.getElementById("es");
+    const btnEn = document.getElementById("btn-en");
+    const btnEs = document.getElementById("btn-es");
+    const html = document.documentElement;
+    let drawn = { en: false, es: false };
+
+    async function draw(lang) {
+      if (drawn[lang]) return;
+      const root = lang === "es" ? es : en;
+      const nodes = root.querySelectorAll(".mermaid");
+      await mermaid.run({ nodes });
+      drawn[lang] = true;
+    }
+
+    function setLang(lang) {
+      const spanish = lang === "es";
+      en.hidden = spanish;
+      es.hidden = !spanish;
+      html.lang = spanish ? "es" : "en";
+      btnEn.setAttribute("aria-pressed", String(!spanish));
+      btnEs.setAttribute("aria-pressed", String(spanish));
+      document.title = spanish
+        ? "Servidor MCP de referencia con CIMD"
+        : "CIMD MCP reference server";
+      const url = new URL(window.location.href);
+      if (spanish) url.searchParams.set("lang", "es");
+      else url.searchParams.delete("lang");
+      history.replaceState(null, "", url);
+      localStorage.setItem("lang", spanish ? "es" : "en");
+      draw(spanish ? "es" : "en");
+    }
+
+    btnEn.addEventListener("click", () => setLang("en"));
+    btnEs.addEventListener("click", () => setLang("es"));
+
+    const fromQuery = new URLSearchParams(location.search).get("lang");
+    const fromStore = localStorage.getItem("lang");
+    const start = fromQuery === "es" || fromQuery === "en"
+      ? fromQuery
+      : fromStore === "es"
+        ? "es"
+        : "en";
+    setLang(start);
+  </script>
+</body>
+</html>
