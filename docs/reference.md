@@ -24,6 +24,8 @@ HTTP/1.1 401 Unauthorized
 WWW-Authenticate: Bearer resource_metadata="{issuer}/.well-known/oauth-protected-resource/mcp", scope="mcp:tools"
 ```
 
+Form bodies on `POST /token`, `POST /revoke`, and `POST /authorize/decision` are capped at 16 KiB (`MAX_FORM_BYTES` in `src/http.ts`). Over the limit, `/token` and `/revoke` answer `413` with `{"error": "invalid_request"}`, and the consent form answers a `413` error page. The check uses `Content-Length` when present and counts the streamed body when it is absent.
+
 Server metadata includes `client_id_metadata_document_supported: true`, `code_challenge_methods_supported: ["S256"]`, `token_endpoint_auth_methods_supported: ["none"]`, and `authorization_response_iss_parameter_supported: true`.
 
 ## CIMD rules
