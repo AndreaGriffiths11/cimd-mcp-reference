@@ -177,7 +177,7 @@
       <h2>Why CIMD replaces DCR</h2>
       <p>DCR lets any caller create a client on your authorization server. That is convenient for first contact and expensive as a trust model: the server learns nothing durable about who the client is, and <code>/register</code> becomes an open write endpoint.</p>
       <p>With CIMD the client already has an identity (the HTTPS URL of its metadata). The server checks that the document's <code>client_id</code> equals that URL and that the request <code>redirect_uri</code> is on the document's list. The client hosts the file. The server does not keep a developer-portal registry.</p>
-      <p>As of 3 October 2026, 2 of 181 official MCP servers advertised CIMD. This project exists so the server side of that spec is copyable.</p>
+      <p>As of 9 October 2026, most MCP servers that use OAuth still don't advertise CIMD: 23 of 151 vendor servers (15%) on <a href="https://mcpmetrics.io/official">McpMetrics' official list</a>, and 29% of OAuth servers in a 3,000-host sample of the MCP registry. This project exists so the server side of that spec is copyable.</p>
 
       <h2>The flow</h2>
       <div class="diagram">
@@ -241,7 +241,7 @@ sequenceDiagram
       <h2>Por qué CIMD sustituye a DCR</h2>
       <p>DCR permite que cualquiera cree un cliente en tu servidor de autorización. Es cómodo para el primer contacto y caro como modelo de confianza: el servidor no aprende nada durable sobre quién es el cliente, y <code>/register</code> queda como un endpoint de escritura abierto.</p>
       <p>Con CIMD el cliente ya tiene identidad (la URL HTTPS de sus metadatos). El servidor comprueba que el <code>client_id</code> del documento es esa URL y que el <code>redirect_uri</code> de la petición está en la lista del documento. El cliente aloja el archivo. El servidor no mantiene un registro tipo portal de desarrolladores.</p>
-      <p>A 3 de octubre de 2026, 2 de 181 servidores MCP oficiales anunciaban CIMD. Este proyecto existe para que el lado servidor de esa especificación se pueda copiar.</p>
+      <p>Al 9 de octubre de 2026, la mayoría de los servidores MCP que usan OAuth todavía no anuncian CIMD: 23 de 151 servidores de proveedores (15%) en la <a href="https://mcpmetrics.io/official">lista oficial de McpMetrics</a>, y el 29% de los servidores con OAuth en una muestra de 3,000 hosts del registro MCP. Este proyecto existe para que el lado servidor de esa especificación se pueda copiar.</p>
 
       <h2>El flujo</h2>
       <div class="diagram">
