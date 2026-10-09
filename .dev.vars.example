@@ -1,0 +1,7 @@
+# Copy to .dev.vars for local development. Never commit real secrets.
+# Loopback CIMD is only accepted when the authorization server also runs locally.
+DEV_ALLOW_LOOPBACK_CLIENT_IDS=true
+ISSUER=http://localhost:8787
+# Uncomment to try the deprecated Dynamic Client Registration path:
+# ENABLE_DEPRECATED_DCR=true
+# To protect local consent, add CONSENT_PASSWORD to your untracked .dev.vars.

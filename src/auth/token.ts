@@ -61,13 +61,17 @@ async function authorizationCodeGrant(form: URLSearchParams, env: Env, config: C
     return oauthError("invalid_target", "resource does not match the authorization request");
   }
 
-  return issue(store, {
-    clientId: record.clientId,
-    scope: record.scope,
-    resource: record.resource,
-    subject: record.subject,
-    grantId: record.grantId,
-  });
+  return issue(
+    store,
+    {
+      clientId: record.clientId,
+      scope: record.scope,
+      resource: record.resource,
+      subject: record.subject,
+      grantId: record.grantId,
+    },
+    "authorization_code",
+  );
 }
 
 async function refreshTokenGrant(form: URLSearchParams, env: Env, config: Config): Promise<Response> {
@@ -106,19 +110,25 @@ async function refreshTokenGrant(form: URLSearchParams, env: Env, config: Config
     if (wanted.some((s) => !granted.has(s))) return oauthError("invalid_scope", "refresh cannot add scopes");
     scope = wanted.join(" ");
   }
-  return issue(store, { ...rotated.record, scope });
+  return issue(store, { ...rotated.record, scope }, "refresh_token");
 }
 
-async function issue(store: ReturnType<typeof authStore>, grant: Omit<AccessTokenRecord, "expiresAt">): Promise<Response> {
+async function issue(
+  store: ReturnType<typeof authStore>,
+  grant: Omit<AccessTokenRecord, "expiresAt">,
+  grantType: "authorization_code" | "refresh_token",
+): Promise<Response> {
   const accessToken = randomToken(32);
   const refreshToken = randomToken(32);
   const now = nowSeconds();
-  await store.issueTokens(
+  const issued = await store.issueTokens(
     await sha256Base64url(accessToken),
     { ...grant, expiresAt: now + LIFETIMES.accessToken },
     await sha256Base64url(refreshToken),
     { ...grant, expiresAt: now + LIFETIMES.refreshToken },
+    grantType,
   );
+  if (!issued) return oauthError("invalid_grant", "grant has been revoked or has expired");
   return json(
     {
       access_token: accessToken,

@@ -10,11 +10,7 @@ Public page (once GitHub Pages is on): https://andreagriffiths11.github.io/cimd-
 
 Live Worker: https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp
 
-That URL advertises `"client_id_metadata_document_supported": true`. Anyone can open a consent screen on it, so set `CONSENT_PASSWORD` if you have not already:
-
-```bash
-npx wrangler secret put CONSENT_PASSWORD
-```
+That URL advertises `"client_id_metadata_document_supported": true`. The hosted demo intentionally has no consent password. Anyone can authorize and read or add shared demo notes. Do not enter private data.
 
 Try it with MCP Inspector (no local server needed):
 
@@ -33,16 +29,17 @@ Requires Node.js 20.11+.
 git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
 cd cimd-mcp-reference
 npm install
+cp .dev.vars.example .dev.vars
 npm run dev                      # terminal 1: server on http://localhost:8787
 node examples/client/cimd-client.mjs   # terminal 2: full login + tool call
 ```
 
-The client opens your browser on a consent screen. Click **Approve**. The terminal then shows `whoami` reporting `client_registration: "client-id-metadata-document"`, a saved note, and a token refresh.
+The client opens your browser on a consent screen. On Windows, it prints the URL for you to open manually. Click **Approve**. The terminal then shows `whoami` reporting `client_registration: "client-id-metadata-document"`, a saved note, and a token refresh.
 
 Flags: `--auto-consent` approves without a browser (local only), `--no-browser` prints the URL instead of opening it.
 
 ```bash
-npm test          # 120 tests
+npm test
 npm run typecheck
 ```
 
@@ -127,8 +124,8 @@ Details and commands: [docs/clients.md](docs/clients.md).
 - Tokens are bound to `{issuer}/mcp`. Anything else is a 401.
 - Codes and refresh tokens are single-use. Replaying a refresh token revokes the grant.
 - Metadata fetches never follow redirects, cap size and time, and refuse private addresses.
-- One demo user (`demo-user`). Set `CONSENT_PASSWORD` if the Worker is public. This is a reference, not an identity provider.
-- No secrets in the repo. `.dev.vars` only enables loopback CIMD for `wrangler dev`.
+- One demo user (`demo-user`), with notes shared by everyone who authorizes. Keep notes public-safe even with `CONSENT_PASSWORD` set. This is a reference, not an identity provider.
+- Copy `.dev.vars.example` to the ignored `.dev.vars` for local development. Never commit secrets; use `wrangler secret put` in production.
 
 More: [docs/security.md](docs/security.md).
 

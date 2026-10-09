@@ -10,11 +10,7 @@ Página pública (cuando GitHub Pages esté activo): https://andreagriffiths11.g
 
 Worker en vivo: https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp
 
-Esa URL anuncia `"client_id_metadata_document_supported": true`. Cualquiera puede abrir la pantalla de consentimiento, así que define `CONSENT_PASSWORD` si aún no lo has hecho:
-
-```bash
-npx wrangler secret put CONSENT_PASSWORD
-```
+Esa URL anuncia `"client_id_metadata_document_supported": true`. La demo alojada no tiene contraseña de consentimiento, de forma intencional. Cualquiera puede autorizar y leer o añadir notas compartidas de demostración. No introduzcas datos privados.
 
 Pruébalo con MCP Inspector (sin servidor local):
 
@@ -33,16 +29,17 @@ Requiere Node.js 20.11 o superior.
 git clone https://github.com/AndreaGriffiths11/cimd-mcp-reference.git
 cd cimd-mcp-reference
 npm install
+cp .dev.vars.example .dev.vars
 npm run dev                            # terminal 1: servidor en http://localhost:8787
 node examples/client/cimd-client.mjs   # terminal 2: login completo + llamada a una herramienta
 ```
 
-El cliente abre el navegador en una pantalla de consentimiento. Pulsa **Approve**. La terminal muestra `whoami` con `client_registration: "client-id-metadata-document"`, una nota guardada y una renovación de token.
+El cliente abre el navegador en una pantalla de consentimiento. En Windows, imprime la URL para que la abras manualmente. Pulsa **Approve**. La terminal muestra `whoami` con `client_registration: "client-id-metadata-document"`, una nota guardada y una renovación de token.
 
 Opciones: `--auto-consent` aprueba sin navegador (solo local), `--no-browser` imprime la URL en lugar de abrirla.
 
 ```bash
-npm test          # 120 pruebas
+npm test
 npm run typecheck
 ```
 
@@ -127,8 +124,8 @@ Detalles y comandos: [docs/clients.md](docs/clients.md) (en inglés).
 - Los tokens van ligados a `{issuer}/mcp`. Cualquier otra cosa es un 401.
 - Códigos y refresh tokens son de un solo uso. Reutilizar un refresh token revoca la concesión.
 - Las descargas de metadatos nunca siguen redirecciones, limitan tamaño y tiempo y rechazan direcciones privadas.
-- Un único usuario de demostración (`demo-user`). Define `CONSENT_PASSWORD` si el Worker es público. Esto es una referencia, no un proveedor de identidad.
-- No hay secretos en el repositorio. `.dev.vars` solo habilita CIMD loopback para `wrangler dev`.
+- Un único usuario de demostración (`demo-user`), con notas compartidas entre todos los que autorizan. No guardes datos privados en las notas, incluso con `CONSENT_PASSWORD`. Esto es una referencia, no un proveedor de identidad.
+- Copia `.dev.vars.example` al archivo ignorado `.dev.vars` para el desarrollo local. Nunca subas secretos; usa `wrangler secret put` en producción.
 
 Más: [docs/security.md](docs/security.md) (en inglés).
 

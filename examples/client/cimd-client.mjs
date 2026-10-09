@@ -34,6 +34,7 @@
 import { createServer } from "node:http";
 import { randomBytes, createHash } from "node:crypto";
 import { spawn } from "node:child_process";
+import { pathToFileURL } from "node:url";
 import { Client } from "@modelcontextprotocol/client";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 
@@ -57,10 +58,12 @@ const clientMetadataDocument = {
 
 const log = (step, message) => console.log(`\n[${step}] ${message}`);
 
-main().catch((error) => {
-  console.error(`\nFailed: ${error.message}`);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(`\nFailed: ${error.message}`);
+    process.exit(1);
+  });
+}
 
 async function main() {
   const local = await startLocalServer();
@@ -109,7 +112,7 @@ async function main() {
     const codeChallenge = base64url(createHash("sha256").update(codeVerifier).digest());
     const state = base64url(randomBytes(16));
     const scope = challenge.params.scope ?? (prm.scopes_supported ?? []).join(" ");
-    const authorizeUrl = new URL(as.authorization_endpoint);
+    const authorizeUrl = parseAuthorizationEndpoint(as.authorization_endpoint);
     authorizeUrl.search = new URLSearchParams({
       response_type: "code",
       client_id: clientId,
@@ -130,7 +133,6 @@ async function main() {
     } else if (args["no-browser"]) {
       console.log("    Open the URL above in your browser and approve the request.");
     } else {
-      console.log("    Opening your browser. Approve the request to continue.");
       openBrowser(authorizeUrl.href);
     }
 
@@ -349,11 +351,24 @@ function startLocalServer() {
   });
 }
 
-function openBrowser(url) {
-  const [cmd, cmdArgs] =
-    process.platform === "darwin" ? ["open", [url]] : process.platform === "win32" ? ["cmd", ["/c", "start", "", url]] : ["xdg-open", [url]];
-  const child = spawn(cmd, cmdArgs, { stdio: "ignore", detached: true });
-  child.on("error", () => console.log(`    Could not open a browser. Visit:\n    ${url}`));
+export function parseAuthorizationEndpoint(endpoint) {
+  const url = new URL(endpoint);
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("authorization_endpoint must use http or https");
+  }
+  return url;
+}
+
+export function openBrowser(url) {
+  const target = parseAuthorizationEndpoint(url).href;
+  if (process.platform === "win32") {
+    console.log(`    Open this URL in your browser and approve the request:\n    ${target}`);
+    return;
+  }
+  console.log("    Opening your browser. Approve the request to continue.");
+  const cmd = process.platform === "darwin" ? "open" : "xdg-open";
+  const child = spawn(cmd, [target], { stdio: "ignore", detached: true });
+  child.on("error", (error) => console.error(`    Could not open a browser: ${error.message}. Visit:\n    ${target}`));
   child.unref();
 }
 

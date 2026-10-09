@@ -12,6 +12,7 @@ Production traffic is HTTPS. Wrangler's local HTTP is for development only.
 - Tokens are opaque and stored as SHA-256 hashes, so a storage leak does not leak usable tokens.
 - Authorization codes are single-use and consumed atomically inside the Durable Object.
 - Refresh tokens rotate. Replaying an old one revokes the whole grant, which turns a stolen refresh token into a detectable event.
+- Replacement tokens require an existing, unexpired grant. A refresh request already in flight cannot recreate a grant after replay revokes it.
 
 ## Metadata fetches (SSRF)
 
@@ -31,8 +32,12 @@ The consent screen is the trust UI. It shows the `client_id` host and the redire
 
 ## Identity
 
-There is one demo resource owner, `demo-user`. Set `CONSENT_PASSWORD` if the Worker is reachable by anyone but you. This is a reference for the client-identity side of OAuth, not an identity provider.
+There is one demo resource owner, `demo-user`. All authorized clients share that user's notes. The hosted demo intentionally has no consent password and accepts anyone who approves the consent screen. Store only public-safe demo data.
+
+For your own deployment, set `CONSENT_PASSWORD` if you want to restrict consent, but do not treat it as per-user isolation. This is a reference for the client-identity side of OAuth, not an identity provider.
 
 ## Secrets
 
-The repo holds none. `.dev.vars` only enables loopback CIMD for `wrangler dev`. Production secrets go through `wrangler secret put`.
+Copy `.dev.vars.example` to `.dev.vars` for loopback development. `.dev.vars`, its environment-specific variants, and `.env` files are ignored by Git. Keep real credentials out of example files. Production secrets go through `wrangler secret put`.
+
+Before making a repository public, review retained branches, pull-request refs, workflow logs and artifacts, and commit email addresses as well as the current files. Replacing a branch's history does not erase old GitHub objects. If a credential was ever exposed, revoke or rotate it rather than relying on a history rewrite. Enable GitHub secret scanning and push protection where available.

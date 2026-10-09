@@ -431,6 +431,77 @@ describe("token endpoint", () => {
     expect(response.status).toBe(401);
   });
 
+  it("rejects late refresh issuance after a replay revokes the grant", async () => {
+    const first = await fullFlow();
+    const stub = env.AUTH_STORE.get(env.AUTH_STORE.idFromName("global")) as DurableObjectStub<AuthStore>;
+    const rotated = await stub.rotateRefreshToken(await sha256Base64url(first.refresh_token));
+    expect(rotated.ok).toBe(true);
+    if (!rotated.ok) throw new Error("refresh token was not consumed");
+
+    // Pause the first request between its two RPC calls, then replay the token.
+    const replay = await token({ grant_type: "refresh_token", refresh_token: first.refresh_token, client_id: CLIENT_ID });
+    expect(replay.status).toBe(400);
+    expect(replay.body.error).toBe("invalid_grant");
+
+    const accessHash = await sha256Base64url("late-access-token");
+    const refreshHash = await sha256Base64url("late-refresh-token");
+    const issued = await stub.issueTokens(
+      accessHash,
+      { ...rotated.record, expiresAt: Math.floor(Date.now() / 1000) + 3600 },
+      refreshHash,
+      rotated.record,
+      "refresh_token",
+    );
+    expect(issued).toBe(false);
+    expect(await stub.getAccessToken(accessHash)).toBeUndefined();
+    expect(await stub.getAccessToken(await sha256Base64url(first.access_token))).toBeUndefined();
+    expect(await stub.rotateRefreshToken(refreshHash)).toEqual({ ok: false, reason: "unknown" });
+  });
+
+  it("leaves no usable replacement tokens after concurrent refresh replay", async () => {
+    const first = await fullFlow();
+    const fields = { grant_type: "refresh_token", refresh_token: first.refresh_token, client_id: CLIENT_ID };
+    const results = await Promise.all([token(fields), token(fields)]);
+    expect(results.filter((result) => result.status === 200).length).toBeLessThanOrEqual(1);
+    expect(results.some((result) => result.status === 400 && result.body.error === "invalid_grant")).toBe(true);
+    for (const result of results) {
+      if (result.status !== 200) continue;
+      expect((await mcp("tools/list", {}, result.body.access_token as string)).response.status).toBe(401);
+      const refresh = await token({
+        grant_type: "refresh_token",
+        refresh_token: result.body.refresh_token as string,
+        client_id: CLIENT_ID,
+      });
+      expect(refresh.status).toBe(400);
+      expect(refresh.body.error).toBe("invalid_grant");
+    }
+  });
+
+  it("does not extend an expired grant during refresh issuance", async () => {
+    const stub = env.AUTH_STORE.get(env.AUTH_STORE.idFromName("global")) as DurableObjectStub<AuthStore>;
+    const now = Math.floor(Date.now() / 1000);
+    const expired = {
+      clientId: CLIENT_ID,
+      scope: "mcp:tools",
+      resource: RESOURCE,
+      subject: "demo-user",
+      grantId: "expired-refresh-grant",
+      expiresAt: now,
+    };
+    await stub.issueTokens(await sha256Base64url("old-access"), expired, undefined, undefined, "authorization_code");
+    const accessHash = await sha256Base64url("renewed-access");
+    expect(
+      await stub.issueTokens(
+        accessHash,
+        { ...expired, expiresAt: now + 3600 },
+        undefined,
+        undefined,
+        "refresh_token",
+      ),
+    ).toBe(false);
+    expect(await stub.getAccessToken(accessHash)).toBeUndefined();
+  });
+
   it("refuses client authentication and unknown grant types", async () => {
     const response = await SELF.fetch(`${ISSUER}/token`, {
       method: "POST",
@@ -468,6 +539,7 @@ describe("MCP endpoint", () => {
       { clientId: CLIENT_ID, scope: "mcp:tools", resource: "https://other.example.com/mcp", subject: "demo-user", grantId: "g1", expiresAt },
       undefined,
       undefined,
+      "authorization_code",
     );
     const { response } = await mcp("tools/list", {}, foreign);
     expect(response.status).toBe(401);
@@ -483,6 +555,7 @@ describe("MCP endpoint", () => {
       { clientId: CLIENT_ID, scope: "", resource: RESOURCE, subject: "demo-user", grantId: "g2", expiresAt },
       undefined,
       undefined,
+      "authorization_code",
     );
     const { response } = await mcp("tools/list", {}, scoped);
     expect(response.status).toBe(403);
@@ -497,6 +570,7 @@ describe("MCP endpoint", () => {
       { clientId: CLIENT_ID, scope: "mcp:tools", resource: RESOURCE, subject: "demo-user", grantId: "g3", expiresAt: Math.floor(Date.now() / 1000) - 1 },
       undefined,
       undefined,
+      "authorization_code",
     );
     expect((await mcp("tools/list", {}, expired)).response.status).toBe(401);
     expect((await mcp("tools/list", {}, "nonsense")).response.status).toBe(401);

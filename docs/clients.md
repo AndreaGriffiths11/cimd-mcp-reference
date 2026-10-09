@@ -12,6 +12,8 @@ node examples/client/cimd-client.mjs --server http://localhost:8787/mcp
 
 Against a deployed Worker, host your own HTTPS metadata document and pass `--client-id https://your.example/client.json`. Its `redirect_uris` must include `http://127.0.0.1:8976/callback` (or the port you give with `--port`). The script still listens locally for the callback.
 
+On Windows, the client prints the authorization URL instead of passing a server-controlled URL to a command shell. Open it manually. Other platforms open the browser automatically unless you pass `--no-browser`. Authorization endpoints must use HTTP or HTTPS.
+
 Verified against local `wrangler dev` on 8 October 2026: CIMD fetch, consent, code + PKCE, audience-bound token, `whoami` / `add_note` / `list_notes`, refresh rotation.
 
 ## MCP Inspector

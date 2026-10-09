@@ -122,9 +122,14 @@ export class AuthStore extends DurableObject<Env> {
     access: AccessTokenRecord,
     refreshTokenHash: string | undefined,
     refresh: RefreshTokenRecord | undefined,
-  ): Promise<void> {
+    grantType: "authorization_code" | "refresh_token",
+  ): Promise<boolean> {
     const grantKey = `grant:${access.grantId}`;
-    const grant = (await this.ctx.storage.get<GrantRecord>(grantKey)) ?? { keys: [], expiresAt: 0 };
+    const existingGrant = await this.ctx.storage.get<GrantRecord>(grantKey);
+    // Replay can revoke the grant between refresh consumption and issuance.
+    // Only an authorization code may create a new grant.
+    if (grantType === "refresh_token" && (!existingGrant || existingGrant.expiresAt <= now())) return false;
+    const grant = existingGrant ?? { keys: [], expiresAt: 0 };
     const entries: Record<string, unknown> = { [`at:${accessTokenHash}`]: access };
     grant.keys.push(`at:${accessTokenHash}`);
     grant.expiresAt = Math.max(grant.expiresAt, access.expiresAt);
@@ -135,6 +140,7 @@ export class AuthStore extends DurableObject<Env> {
     }
     entries[grantKey] = grant;
     await this.ctx.storage.put(entries);
+    return true;
   }
 
   async getAccessToken(accessTokenHash: string): Promise<AccessTokenRecord | undefined> {
