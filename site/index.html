@@ -257,6 +257,7 @@
   "redirect_uris": ["http://127.0.0.1:3000/callback"],
   "token_endpoint_auth_method": "none"
 }</pre>
+      <p class="note">(Example for a local client. The hosted demo's <code>inspector-web.json</code> uses <code>http://localhost:6274/oauth/callback</code> for MCP Inspector, so copy that one to try the live server.)</p>
       <p>This is a working server-side example of that path: discovery, CIMD fetch with SSRF guards, consent, PKCE tokens, and a Streamable HTTP MCP endpoint.</p>
 
       <h2>Why CIMD replaces DCR</h2>
@@ -327,6 +328,7 @@ sequenceDiagram
   "redirect_uris": ["http://127.0.0.1:3000/callback"],
   "token_endpoint_auth_method": "none"
 }</pre>
+      <p class="note">(Ejemplo para un cliente local. El <code>inspector-web.json</code> de la demo alojada usa <code>http://localhost:6274/oauth/callback</code> para MCP Inspector, así que copia ese para probar el servidor en vivo.)</p>
       <p>Este es un ejemplo funcional del lado servidor: descubrimiento, descarga CIMD con protecciones SSRF, consentimiento, tokens PKCE y un endpoint MCP Streamable HTTP.</p>
 
       <h2>Por qué CIMD sustituye a DCR</h2>
