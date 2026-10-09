@@ -4,6 +4,8 @@ Un servidor MCP remoto en Cloudflare Workers que autentica clientes con OAuth us
 
 De [Andrea Griffiths](https://github.com/AndreaGriffiths11). MIT. [English](README.md).
 
+https://github.com/user-attachments/assets/f4a3e5e8-a609-4e93-b560-d16005884880
+
 Página pública (cuando GitHub Pages esté activo): https://andreagriffiths11.github.io/cimd-mcp-reference/?lang=es
 
 Worker en vivo: https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp
