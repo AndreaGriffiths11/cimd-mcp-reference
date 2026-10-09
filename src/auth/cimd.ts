@@ -244,6 +244,10 @@ export async function fetchClientMetadata(
 
   await assertResolvesToPublicAddress(clientIdUrl, policy, deps.resolve);
 
+  // fetch() below resolves the hostname again and Workers cannot pin it to the
+  // addresses checked above, so DNS rebinding between the two is a known
+  // limitation. See the header of ssrf.ts for what contains it here and what a
+  // runtime with socket control should do instead.
   let response: Response;
   try {
     response = await deps.fetch(clientId, {

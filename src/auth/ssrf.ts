@@ -13,11 +13,27 @@
  *   2. DNS: the name is resolved with DNS over HTTPS and every A/AAAA answer
  *      is checked against the same ranges.
  *
- * Residual risk: a Worker cannot pin the IP a later fetch() connects to, so a
- * DNS rebinding attacker could pass step 2 and then answer differently. On
- * Cloudflare this is contained because Workers cannot open connections to
- * private or loopback addresses at all. Self-hosters on other runtimes should
- * add network policy.
+ * Known limitation (DNS rebinding, time of check to time of use): step 2
+ * resolves the name, then fetch() resolves it again on its own. Workers have
+ * no way to make fetch() connect to an address we already checked, so an
+ * attacker who controls the DNS for a client_id host can answer with a public
+ * address for the check and a different address for the fetch. The guard in
+ * step 2 therefore narrows the window and does not close it.
+ *
+ * What limits the damage here (see fetchClientMetadata in cimd.ts):
+ *   - client_id must be https, so the target must present a valid certificate
+ *     for the attacker's hostname, which internal services normally cannot.
+ *   - The Worker's fetch() leaves from Cloudflare's network, which has no
+ *     route into the private network of whoever deploys the Worker.
+ *   - Redirects are not followed; any 3xx is rejected.
+ *   - The fetch times out after 5 seconds, the body is capped at 5 KiB, and
+ *     it must be JSON that passes document validation.
+ *   - CIMD_ALLOWED_HOSTS replaces the open model with an allow list.
+ *
+ * A server on a runtime that can control sockets (Node, Go, and so on) should
+ * resolve once, check the addresses, and connect to that pinned address
+ * (keeping the original hostname for TLS SNI and the Host header), and ideally
+ * also deny private ranges with egress network policy.
  */
 
 export type ResolveAddresses = (hostname: string) => Promise<string[]>;

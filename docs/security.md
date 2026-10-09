@@ -21,10 +21,28 @@ The server fetches a URL the client chose. That is the main attack surface of CI
 - IP literals and non-public hostnames are refused before any network call.
 - DNS is resolved over HTTPS and every A/AAAA answer is checked against RFC 6890 special-use ranges (private, loopback, link-local, cloud metadata, documentation, and the rest of that registry).
 - Redirects are never followed. Size is capped at 5 KiB, time at 5 seconds, content type must be JSON.
-- Cloudflare Workers also cannot open connections to private addresses, which is a second layer.
-- Residual risk: DNS rebinding between the DoH check and the fetch, on runtimes that can connect to the resolved IP. Workers cannot, so it does not apply here.
+- The Worker's outbound fetch leaves from Cloudflare's network, which has no route into the private network of whoever deploys the Worker.
 
 `CIMD_ALLOWED_HOSTS` turns the open model into an allow list if you want one.
+
+## Form bodies
+
+`POST /token`, `POST /revoke`, and `POST /authorize/decision` accept at most 16 KiB of form data. A larger `Content-Length` is refused before the body is read. Without `Content-Length`, the body is counted while it streams in and reading stops at the limit.
+
+## Known limitations
+
+### DNS rebinding in the metadata fetch
+
+The SSRF check resolves the `client_id` host with DNS over HTTPS, then `fetch()` resolves it again. Workers cannot tell `fetch()` to connect to the address that was checked. An attacker who controls DNS for a `client_id` host can answer with a public address for the check and a different one for the fetch. The check narrows this window. It does not close it.
+
+What limits the impact on this server:
+
+- Outside local development, `client_id` must be `https`. The target has to present a valid certificate for the attacker's hostname, which internal services normally cannot.
+- The fetch leaves from Cloudflare's network, which has no route into your private network.
+- Redirects are rejected, the fetch times out after 5 seconds, the body is capped at 5 KiB, and it must be a JSON document that passes validation.
+- `CIMD_ALLOWED_HOSTS` limits fetches to hosts you list.
+
+If you port this to a runtime that controls sockets (Node, Go, and so on), resolve once, check every address, and connect to the checked address while keeping the original hostname for TLS SNI and the `Host` header. Add egress network policy that blocks private ranges as well.
 
 ## Consent screen
 

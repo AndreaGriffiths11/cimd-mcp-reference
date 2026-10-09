@@ -511,6 +511,39 @@ describe("token endpoint", () => {
     expect(response.status).toBe(401);
     expect((await token({ grant_type: "client_credentials" })).body.error).toBe("unsupported_grant_type");
   });
+
+  it("answers 413 invalid_request for an over-limit form with Content-Length", async () => {
+    const body = `grant_type=authorization_code&code=${"x".repeat(20 * 1024)}`;
+    const response = await SELF.fetch(`${ISSUER}/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": String(body.length) },
+      body,
+    });
+    expect(response.status).toBe(413);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(((await response.json()) as { error: string }).error).toBe("invalid_request");
+  });
+
+  // workerd logs "read end of pipe was aborted" here: the Worker cancels the upload at the limit.
+  it("answers 413 invalid_request for an over-limit streamed form without Content-Length", async () => {
+    const chunk = new TextEncoder().encode("x".repeat(4096));
+    let sent = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (sent++ < 8) controller.enqueue(chunk);
+        else controller.close();
+      },
+    });
+    const response = await SELF.fetch(`${ISSUER}/revoke`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: stream,
+      // @ts-expect-error duplex is required for stream bodies but missing from the RequestInit type
+      duplex: "half",
+    });
+    expect(response.status).toBe(413);
+    expect(((await response.json()) as { error: string }).error).toBe("invalid_request");
+  });
 });
 
 describe("MCP endpoint", () => {

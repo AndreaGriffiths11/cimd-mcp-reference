@@ -95,7 +95,7 @@ export async function handleDecision(request: Request, env: Env, config: Config)
   try {
     form = await readForm(request);
   } catch (error) {
-    if (error instanceof FormError) return errorPage("Bad request", error.message);
+    if (error instanceof FormError) return errorPage(error.status === 413 ? "Request too large" : "Bad request", error.message, undefined, error.status);
     throw error;
   }
   const requestId = form.get("request_id") ?? "";

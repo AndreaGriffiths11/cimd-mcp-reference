@@ -17,7 +17,7 @@ export async function handleToken(request: Request, env: Env, config: Config): P
   try {
     form = await readForm(request);
   } catch (error) {
-    if (error instanceof FormError) return oauthError("invalid_request", error.message);
+    if (error instanceof FormError) return oauthError("invalid_request", error.message, error.status);
     throw error;
   }
   if (request.headers.has("Authorization")) {
@@ -148,7 +148,7 @@ export async function handleRevoke(request: Request, env: Env): Promise<Response
   try {
     form = await readForm(request);
   } catch (error) {
-    if (error instanceof FormError) return oauthError("invalid_request", error.message);
+    if (error instanceof FormError) return oauthError("invalid_request", error.message, error.status);
     throw error;
   }
   const token = form.get("token");

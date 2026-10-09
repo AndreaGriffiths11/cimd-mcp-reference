@@ -55,16 +55,57 @@ export function oauthError(
   return json({ error, error_description: description, ...extra }, { status }, NO_STORE);
 }
 
-export async function readForm(request: Request): Promise<URLSearchParams> {
+/** Largest form body accepted by /token, /revoke, and the consent form. Real requests are well under 4 KiB. */
+export const MAX_FORM_BYTES = 16 * 1024;
+
+/**
+ * Reads an application/x-www-form-urlencoded body of at most `maxBytes`.
+ * A declared Content-Length over the limit is refused before reading; the
+ * stream is also counted while reading, because Content-Length can be absent
+ * (chunked uploads) or wrong.
+ */
+export async function readForm(request: Request, maxBytes = MAX_FORM_BYTES): Promise<URLSearchParams> {
   const type = request.headers.get("Content-Type") ?? "";
   if (!type.toLowerCase().startsWith("application/x-www-form-urlencoded")) {
     throw new FormError("Content-Type must be application/x-www-form-urlencoded");
   }
-  const bytes = new Uint8Array(await request.arrayBuffer());
+  const tooLarge = () => new FormError(`form body exceeds ${maxBytes} bytes`, 413);
+  const declared = request.headers.get("Content-Length");
+  if (declared !== null && Number(declared) > maxBytes) throw tooLarge();
+  if (!request.body) return new URLSearchParams();
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw tooLarge();
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
   return new URLSearchParams(new TextDecoder().decode(bytes));
 }
 
-export class FormError extends Error {}
+export class FormError extends Error {
+  constructor(
+    message: string,
+    /** HTTP status to answer with: 400 for a malformed request, 413 when the body is over the limit. */
+    public readonly status = 400,
+  ) {
+    super(message);
+    this.name = "FormError";
+  }
+}
 
 export function escapeHtml(value: string): string {
   return value
