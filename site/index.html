@@ -121,17 +121,96 @@
       padding: 0;
     }
     ul.docs { padding-left: 1.2rem; }
-    .repo {
+    .live {
+      margin: 1.5rem 0 1rem;
+      padding: 1.25rem;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 0.75rem;
-      padding: 0.9rem 1rem;
     }
-    .repo p { margin: 0; }
-    .repo code { word-break: break-all; background: none; border: 0; padding: 0; }
+    .live-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin: 0;
+      padding: 0.25rem 0.65rem;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .status::before {
+      content: "";
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: #16a34a;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.65rem 1.1rem;
+      background: var(--accent);
+      color: var(--heading);
+      border: 1px solid var(--accent);
+      border-radius: 0.375rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .btn:hover { background: #4aa3ff; border-color: #4aa3ff; color: var(--heading); }
+    .label {
+      margin: 1.1rem 0 0.4rem;
+      color: var(--heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .copyrow {
+      display: flex;
+      align-items: stretch;
+      gap: 0.5rem;
+      background: var(--code-bg);
+      border: 1px solid var(--code-line);
+      border-radius: 0.75rem;
+      padding: 0.4rem 0.4rem 0.4rem 1rem;
+    }
+    .copyrow pre {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
+      padding: 0.45rem 0;
+      border: 0;
+      border-radius: 0;
+      white-space: pre;
+    }
+    .copyrow pre.endpoint { white-space: pre-wrap; word-break: break-all; }
+    .copy {
+      flex-shrink: 0;
+      align-self: center;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.45rem 0.75rem;
+      background: var(--code-line);
+      color: var(--code-ink);
+      border: 1px solid #334155;
+      border-radius: 0.375rem;
+      cursor: pointer;
+    }
+    .copy:hover { background: #334155; }
+    .copy:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     [hidden] { display: none !important; }
     @media (max-width: 640px) {
       h1 { font-size: 1.75rem; }
+      .live { padding: 1rem; }
+      .btn { display: block; text-align: center; width: 100%; }
     }
   </style>
 </head>
@@ -151,16 +230,22 @@
       <h1>CIMD MCP reference server</h1>
       <p class="lede">A remote MCP server on Cloudflare Workers that accepts OAuth clients identified by a Client ID Metadata Document. No developer portal, no <code>client_secret</code>, no <code>POST /register</code>.</p>
 
-      <h2>Live Worker</h2>
-      <p>A public copy is running at:</p>
-      <div class="repo">
-        <p><code>https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</code></p>
-      </div>
-      <p>It advertises <code>client_id_metadata_document_supported: true</code>. Try it with MCP Inspector:</p>
-      <pre>npx @modelcontextprotocol/inspector \
-  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
-  --transport http \
-  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
+      <section class="live" aria-label="Live server">
+        <div class="live-top">
+          <p class="status">Live on Cloudflare Workers</p>
+          <a class="btn" href="https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/">Open the live server</a>
+        </div>
+        <p class="label" id="en-endpoint">MCP endpoint</p>
+        <div class="copyrow">
+          <pre class="endpoint" aria-labelledby="en-endpoint">https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</pre>
+          <button type="button" class="copy" aria-live="polite" data-label="Copy" data-done="Copied">Copy</button>
+        </div>
+        <p class="label" id="en-inspector">Try it with MCP Inspector</p>
+        <div class="copyrow">
+          <pre aria-labelledby="en-inspector">npx @modelcontextprotocol/inspector --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp --transport http --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
+          <button type="button" class="copy" aria-live="polite" data-label="Copy" data-done="Copied">Copy</button>
+        </div>
+      </section>
       <p class="note">The hosted demo has an open consent screen with no password on purpose, so anyone can try the full CIMD flow. Tokens only reach the demo tools (<code>whoami</code>, <code>current_time</code>, <code>add_note</code>, <code>list_notes</code>) and demo notes. On a copy you deploy, <code>CONSENT_PASSWORD</code> is an optional Worker secret that gates the consent screen. A real server should use real user login.</p>
 
       <h2>What this is</h2>
@@ -215,16 +300,22 @@ sequenceDiagram
       <h1>Servidor MCP de referencia con CIMD</h1>
       <p class="lede">Un servidor MCP remoto en Cloudflare Workers que acepta clientes OAuth identificados por un Client ID Metadata Document. Sin portal de desarrolladores, sin <code>client_secret</code>, sin <code>POST /register</code>.</p>
 
-      <h2>Worker en vivo</h2>
-      <p>Hay una copia pública en:</p>
-      <div class="repo">
-        <p><code>https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</code></p>
-      </div>
-      <p>Anuncia <code>client_id_metadata_document_supported: true</code>. Pruébalo con MCP Inspector:</p>
-      <pre>npx @modelcontextprotocol/inspector \
-  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
-  --transport http \
-  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
+      <section class="live" aria-label="Servidor en vivo">
+        <div class="live-top">
+          <p class="status">En vivo en Cloudflare Workers</p>
+          <a class="btn" href="https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/">Abrir el servidor en vivo</a>
+        </div>
+        <p class="label" id="es-endpoint">Endpoint MCP</p>
+        <div class="copyrow">
+          <pre class="endpoint" aria-labelledby="es-endpoint">https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</pre>
+          <button type="button" class="copy" aria-live="polite" data-label="Copiar" data-done="Copiado">Copiar</button>
+        </div>
+        <p class="label" id="es-inspector">Pruébalo con MCP Inspector</p>
+        <div class="copyrow">
+          <pre aria-labelledby="es-inspector">npx @modelcontextprotocol/inspector --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp --transport http --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
+          <button type="button" class="copy" aria-live="polite" data-label="Copiar" data-done="Copiado">Copiar</button>
+        </div>
+      </section>
       <p class="note">La demo alojada tiene la pantalla de consentimiento abierta, sin contraseña, a propósito, para que cualquiera pueda probar el flujo CIMD completo. Los tokens solo llegan a las herramientas de demostración (<code>whoami</code>, <code>current_time</code>, <code>add_note</code>, <code>list_notes</code>) y a las notas de demostración. En una copia que despliegues, <code>CONSENT_PASSWORD</code> es un secreto opcional del Worker que bloquea la pantalla de consentimiento. Un servidor real debería usar un login de usuario real.</p>
 
       <h2>Qué es esto</h2>
@@ -338,6 +429,26 @@ sequenceDiagram
       history.replaceState(null, "", url);
       localStorage.setItem("lang", spanish ? "es" : "en");
       draw(spanish ? "es" : "en");
+    }
+
+    for (const button of document.querySelectorAll(".copy")) {
+      button.addEventListener("click", async () => {
+        const pre = button.parentElement.querySelector("pre");
+        const text = pre.textContent.trim();
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const range = document.createRange();
+          range.selectNodeContents(pre);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          document.execCommand("copy");
+          selection.removeAllRanges();
+        }
+        button.textContent = button.dataset.done;
+        setTimeout(() => { button.textContent = button.dataset.label; }, 1500);
+      });
     }
 
     btnEn.addEventListener("click", () => setLang("en"));
