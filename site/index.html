@@ -7,13 +7,19 @@
   <meta name="description" content="A reference remote MCP server that accepts OAuth clients identified by a Client ID Metadata Document. No developer portal.">
   <style>
     :root {
-      --bg: #f6f3ee;
-      --ink: #1c1917;
-      --muted: #57534e;
-      --card: #fffdf9;
-      --line: #d6d3d1;
-      --accent: #0f3d3e;
-      --code: #ece7df;
+      --bg: #ffffff;
+      --panel: #f8fafc;
+      --fill: #f1f5f9;
+      --heading: #0f172a;
+      --ink: #334155;
+      --body: #475569;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --accent: #208bfe;
+      --link: #0a66cc;
+      --code-bg: #0f172a;
+      --code-line: #1e293b;
+      --code-ink: #e2e8f0;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -21,67 +27,190 @@
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      font: 1.05rem/1.55 "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
+      font: 1rem/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
-    header, main, footer { max-width: 42rem; margin: 0 auto; padding: 1.25rem 1.25rem 0; }
-    footer { padding-bottom: 3rem; color: var(--muted); font-size: 0.95rem; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.95);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: saturate(180%) blur(8px);
+    }
+    .top, main, footer { max-width: 44rem; margin: 0 auto; padding-left: 1.25rem; padding-right: 1.25rem; }
     .top {
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 1rem;
+      min-height: 3.5rem;
+      padding-top: 0.6rem;
+      padding-bottom: 0.6rem;
     }
+    #byline { color: var(--heading); font-weight: 600; font-size: 0.95rem; }
+    main { padding-top: 0.5rem; }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      padding-bottom: 3rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    footer p { color: var(--muted); }
     .langs { display: flex; gap: 0.35rem; }
     .langs button {
-      font: 0.85rem/1 system-ui, sans-serif;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      line-height: 1;
       border: 1px solid var(--line);
-      background: var(--card);
+      background: var(--bg);
       color: var(--ink);
-      padding: 0.35rem 0.7rem;
-      border-radius: 999px;
+      padding: 0.45rem 0.8rem;
+      border-radius: 0.375rem;
       cursor: pointer;
     }
+    .langs button:hover { background: var(--fill); }
     .langs button[aria-pressed="true"] {
       background: var(--accent);
-      color: #fff;
+      color: var(--heading);
       border-color: var(--accent);
     }
-    h1 { font-size: 2rem; line-height: 1.2; margin: 1.5rem 0 0.5rem; }
-    h2 { font-size: 1.25rem; margin: 2rem 0 0.6rem; }
+    .langs button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    h1, h2 { color: var(--heading); letter-spacing: -0.02em; }
+    h1 { font-size: 2.25rem; line-height: 1.15; font-weight: 700; margin: 2rem 0 0.75rem; }
+    h2 { font-size: 1.3rem; line-height: 1.3; font-weight: 650; margin: 2.5rem 0 0.6rem; }
     p, li { color: var(--ink); }
-    .lede { font-size: 1.15rem; }
+    .lede { font-size: 1.15rem; color: var(--body); }
     .muted, .note { color: var(--muted); }
-    a { color: var(--accent); }
-    pre, code { font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace; font-size: 0.88rem; }
-    pre {
-      background: var(--code);
+    .note { font-size: 0.95rem; }
+    a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+    a:hover { color: var(--heading); }
+    pre, code { font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace; font-size: 0.86rem; }
+    :not(pre) > code {
+      background: var(--fill);
+      color: var(--heading);
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 0.9rem 1rem;
+      border-radius: 0.375rem;
+      padding: 0.1rem 0.35rem;
+    }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-ink);
+      border: 1px solid var(--code-line);
+      border-radius: 0.75rem;
+      padding: 1rem 1.1rem;
       overflow-x: auto;
+      line-height: 1.55;
     }
     .diagram {
-      background: var(--card);
+      background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 0.75rem;
+      border-radius: 0.75rem;
+      padding: 1rem;
       overflow-x: auto;
     }
-    .diagram .mermaid { margin: 0; }
-    ul.docs { padding-left: 1.2rem; }
-    .repo {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 0.9rem 1rem;
+    .diagram pre.mermaid {
+      margin: 0;
+      background: transparent;
+      color: var(--heading);
+      border: 0;
+      padding: 0;
     }
-    .repo code { word-break: break-all; }
+    ul.docs { padding-left: 1.2rem; }
+    .live {
+      margin: 1.5rem 0 1rem;
+      padding: 1.25rem;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 0.75rem;
+    }
+    .live-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin: 0;
+      padding: 0.25rem 0.65rem;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .status::before {
+      content: "";
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: #16a34a;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.65rem 1.1rem;
+      background: var(--accent);
+      color: var(--heading);
+      border: 1px solid var(--accent);
+      border-radius: 0.375rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .btn:hover { background: #4aa3ff; border-color: #4aa3ff; color: var(--heading); }
+    .label {
+      margin: 1.1rem 0 0.4rem;
+      color: var(--heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .copyrow {
+      display: flex;
+      align-items: stretch;
+      gap: 0.5rem;
+      background: var(--code-bg);
+      border: 1px solid var(--code-line);
+      border-radius: 0.75rem;
+      padding: 0.4rem 0.4rem 0.4rem 1rem;
+    }
+    .copyrow pre {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
+      padding: 0.45rem 0;
+      border: 0;
+      border-radius: 0;
+      white-space: pre;
+    }
+    .copyrow pre.endpoint { white-space: pre-wrap; word-break: break-all; }
+    .copy {
+      flex-shrink: 0;
+      align-self: center;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.45rem 0.75rem;
+      background: var(--code-line);
+      color: var(--code-ink);
+      border: 1px solid #334155;
+      border-radius: 0.375rem;
+      cursor: pointer;
+    }
+    .copy:hover { background: #334155; }
+    .copy:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     [hidden] { display: none !important; }
     @media (max-width: 640px) {
-      h1 { font-size: 1.6rem; }
+      h1 { font-size: 1.75rem; }
+      .live { padding: 1rem; }
+      .btn { display: block; text-align: center; width: 100%; }
     }
   </style>
 </head>
@@ -101,17 +230,23 @@
       <h1>CIMD MCP reference server</h1>
       <p class="lede">A remote MCP server on Cloudflare Workers that accepts OAuth clients identified by a Client ID Metadata Document. No developer portal, no <code>client_secret</code>, no <code>POST /register</code>.</p>
 
-      <h2>Live Worker</h2>
-      <p>A public copy is running at:</p>
-      <div class="repo">
-        <p><code>https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</code></p>
-      </div>
-      <p>It advertises <code>client_id_metadata_document_supported: true</code>. Try it with MCP Inspector:</p>
-      <pre>npx @modelcontextprotocol/inspector \
-  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
-  --transport http \
-  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
-      <p class="note">The consent screen is public. Anyone who can load it can issue a token for the demo user unless a <code>CONSENT_PASSWORD</code> is set.</p>
+      <section class="live" aria-label="Live server">
+        <div class="live-top">
+          <p class="status">Live on Cloudflare Workers</p>
+          <a class="btn" href="https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/">Open the live server</a>
+        </div>
+        <p class="label" id="en-endpoint">MCP endpoint</p>
+        <div class="copyrow">
+          <pre class="endpoint" aria-labelledby="en-endpoint">https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</pre>
+          <button type="button" class="copy" aria-live="polite" data-label="Copy" data-done="Copied">Copy</button>
+        </div>
+        <p class="label" id="en-inspector">Try it with MCP Inspector</p>
+        <div class="copyrow">
+          <pre aria-labelledby="en-inspector">npx @modelcontextprotocol/inspector --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp --transport http --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
+          <button type="button" class="copy" aria-live="polite" data-label="Copy" data-done="Copied">Copy</button>
+        </div>
+      </section>
+      <p class="note">The hosted demo has an open consent screen with no password on purpose, so anyone can try the full CIMD flow. Tokens only reach the demo tools (<code>whoami</code>, <code>current_time</code>, <code>add_note</code>, <code>list_notes</code>) and demo notes. On a copy you deploy, <code>CONSENT_PASSWORD</code> is an optional Worker secret that gates the consent screen. A real server should use real user login.</p>
 
       <h2>What this is</h2>
       <p>MCP clients talk to servers they have never seen. Classic OAuth assumes the server already knows the app. That is why MCP used Dynamic Client Registration (DCR, RFC 7591): the client posted to <code>/register</code> and the server minted a <code>client_id</code>.</p>
@@ -122,12 +257,13 @@
   "redirect_uris": ["http://127.0.0.1:3000/callback"],
   "token_endpoint_auth_method": "none"
 }</pre>
+      <p class="note">(Example for a local client. The hosted demo's <code>inspector-web.json</code> uses <code>http://localhost:6274/oauth/callback</code> for MCP Inspector, so copy that one to try the live server.)</p>
       <p>This is a working server-side example of that path: discovery, CIMD fetch with SSRF guards, consent, PKCE tokens, and a Streamable HTTP MCP endpoint.</p>
 
       <h2>Why CIMD replaces DCR</h2>
       <p>DCR lets any caller create a client on your authorization server. That is convenient for first contact and expensive as a trust model: the server learns nothing durable about who the client is, and <code>/register</code> becomes an open write endpoint.</p>
       <p>With CIMD the client already has an identity (the HTTPS URL of its metadata). The server checks that the document's <code>client_id</code> equals that URL and that the request <code>redirect_uri</code> is on the document's list. The client hosts the file. The server does not keep a developer-portal registry.</p>
-      <p>As of 3 October 2026, 2 of 181 official MCP servers advertised CIMD. This project exists so the server side of that spec is copyable.</p>
+      <p>As of 9 October 2026, most MCP servers that use OAuth still don't advertise CIMD: 23 of 151 vendor servers (15%) on <a href="https://mcpmetrics.io/official">McpMetrics' official list</a>, and 29% of OAuth servers in a 3,000-host sample of the MCP registry. This project exists so the server side of that spec is copyable.</p>
 
       <h2>The flow</h2>
       <div class="diagram">
@@ -165,17 +301,23 @@ sequenceDiagram
       <h1>Servidor MCP de referencia con CIMD</h1>
       <p class="lede">Un servidor MCP remoto en Cloudflare Workers que acepta clientes OAuth identificados por un Client ID Metadata Document. Sin portal de desarrolladores, sin <code>client_secret</code>, sin <code>POST /register</code>.</p>
 
-      <h2>Worker en vivo</h2>
-      <p>Hay una copia pública en:</p>
-      <div class="repo">
-        <p><code>https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</code></p>
-      </div>
-      <p>Anuncia <code>client_id_metadata_document_supported: true</code>. Pruébalo con MCP Inspector:</p>
-      <pre>npx @modelcontextprotocol/inspector \
-  --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp \
-  --transport http \
-  --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
-      <p class="note">La pantalla de consentimiento es pública. Quien la cargue puede emitir un token para el usuario de demostración si no hay un <code>CONSENT_PASSWORD</code>.</p>
+      <section class="live" aria-label="Servidor en vivo">
+        <div class="live-top">
+          <p class="status">En vivo en Cloudflare Workers</p>
+          <a class="btn" href="https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/">Abrir el servidor en vivo</a>
+        </div>
+        <p class="label" id="es-endpoint">Endpoint MCP</p>
+        <div class="copyrow">
+          <pre class="endpoint" aria-labelledby="es-endpoint">https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp</pre>
+          <button type="button" class="copy" aria-live="polite" data-label="Copiar" data-done="Copiado">Copiar</button>
+        </div>
+        <p class="label" id="es-inspector">Pruébalo con MCP Inspector</p>
+        <div class="copyrow">
+          <pre aria-labelledby="es-inspector">npx @modelcontextprotocol/inspector --server-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/mcp --transport http --client-metadata-url https://cimd-mcp-reference.andrea-oauth-demos.workers.dev/examples/inspector-web.json</pre>
+          <button type="button" class="copy" aria-live="polite" data-label="Copiar" data-done="Copiado">Copiar</button>
+        </div>
+      </section>
+      <p class="note">La demo alojada tiene la pantalla de consentimiento abierta, sin contraseña, a propósito, para que cualquiera pueda probar el flujo CIMD completo. Los tokens solo llegan a las herramientas de demostración (<code>whoami</code>, <code>current_time</code>, <code>add_note</code>, <code>list_notes</code>) y a las notas de demostración. En una copia que despliegues, <code>CONSENT_PASSWORD</code> es un secreto opcional del Worker que bloquea la pantalla de consentimiento. Un servidor real debería usar un login de usuario real.</p>
 
       <h2>Qué es esto</h2>
       <p>Los clientes MCP hablan con servidores que nunca han visto. OAuth clásico asume que el servidor ya conoce la aplicación. Por eso MCP usaba Dynamic Client Registration (DCR, RFC 7591): el cliente hacía POST a <code>/register</code> y el servidor emitía un <code>client_id</code>.</p>
@@ -186,12 +328,13 @@ sequenceDiagram
   "redirect_uris": ["http://127.0.0.1:3000/callback"],
   "token_endpoint_auth_method": "none"
 }</pre>
+      <p class="note">(Ejemplo para un cliente local. El <code>inspector-web.json</code> de la demo alojada usa <code>http://localhost:6274/oauth/callback</code> para MCP Inspector, así que copia ese para probar el servidor en vivo.)</p>
       <p>Este es un ejemplo funcional del lado servidor: descubrimiento, descarga CIMD con protecciones SSRF, consentimiento, tokens PKCE y un endpoint MCP Streamable HTTP.</p>
 
       <h2>Por qué CIMD sustituye a DCR</h2>
       <p>DCR permite que cualquiera cree un cliente en tu servidor de autorización. Es cómodo para el primer contacto y caro como modelo de confianza: el servidor no aprende nada durable sobre quién es el cliente, y <code>/register</code> queda como un endpoint de escritura abierto.</p>
       <p>Con CIMD el cliente ya tiene identidad (la URL HTTPS de sus metadatos). El servidor comprueba que el <code>client_id</code> del documento es esa URL y que el <code>redirect_uri</code> de la petición está en la lista del documento. El cliente aloja el archivo. El servidor no mantiene un registro tipo portal de desarrolladores.</p>
-      <p>A 3 de octubre de 2026, 2 de 181 servidores MCP oficiales anunciaban CIMD. Este proyecto existe para que el lado servidor de esa especificación se pueda copiar.</p>
+      <p>Al 9 de octubre de 2026, la mayoría de los servidores MCP que usan OAuth todavía no anuncian CIMD: 23 de 151 servidores de proveedores (15%) en la <a href="https://mcpmetrics.io/official">lista oficial de McpMetrics</a>, y el 29% de los servidores con OAuth en una muestra de 3,000 hosts del registro MCP. Este proyecto existe para que el lado servidor de esa especificación se pueda copiar.</p>
 
       <h2>El flujo</h2>
       <div class="diagram">
@@ -235,8 +378,26 @@ sequenceDiagram
 
     mermaid.initialize({
       startOnLoad: false,
-      theme: "neutral",
+      theme: "base",
       securityLevel: "strict",
+      themeVariables: {
+        fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+        background: "#f8fafc",
+        primaryColor: "#ffffff",
+        primaryTextColor: "#0f172a",
+        primaryBorderColor: "#208bfe",
+        lineColor: "#475569",
+        textColor: "#0f172a",
+        actorBkg: "#ffffff",
+        actorBorder: "#208bfe",
+        actorTextColor: "#0f172a",
+        actorLineColor: "#94a3b8",
+        signalColor: "#334155",
+        signalTextColor: "#0f172a",
+        noteBkgColor: "#f1f5f9",
+        noteBorderColor: "#e2e8f0",
+        noteTextColor: "#0f172a",
+      },
     });
 
     const en = document.getElementById("en");
@@ -270,6 +431,26 @@ sequenceDiagram
       history.replaceState(null, "", url);
       localStorage.setItem("lang", spanish ? "es" : "en");
       draw(spanish ? "es" : "en");
+    }
+
+    for (const button of document.querySelectorAll(".copy")) {
+      button.addEventListener("click", async () => {
+        const pre = button.parentElement.querySelector("pre");
+        const text = pre.textContent.trim();
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const range = document.createRange();
+          range.selectNodeContents(pre);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          document.execCommand("copy");
+          selection.removeAllRanges();
+        }
+        button.textContent = button.dataset.done;
+        setTimeout(() => { button.textContent = button.dataset.label; }, 1500);
+      });
     }
 
     btnEn.addEventListener("click", () => setLang("en"));
