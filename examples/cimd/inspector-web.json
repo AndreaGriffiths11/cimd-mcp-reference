@@ -1,0 +1,9 @@
+{
+  "client_id": "https://example.com/replace-with-the-https-url-of-this-file.json",
+  "client_name": "MCP Inspector (web)",
+  "client_uri": "https://modelcontextprotocol.io/docs/tools/inspector",
+  "redirect_uris": ["http://localhost:6274/oauth/callback"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none"
+}

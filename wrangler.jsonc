@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cimd-mcp-reference",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "traces": { "enabled": true }
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "AUTH_STORE", "class_name": "AuthStore" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AuthStore"] }],
+  "vars": {
+    // Public base URL of this Worker. Leave empty to derive it from each request
+    // (fine for `wrangler dev` and *.workers.dev). Set it explicitly behind a
+    // custom domain or a proxy, for example "https://mcp.example.com".
+    "ISSUER": "https://cimd-mcp-reference.andrea-oauth-demos.workers.dev",
+    // Accept http://127.0.0.1 and http://localhost client_id URLs. Only honoured
+    // when the issuer itself is a loopback address. Set in .dev.vars for local
+    // development; never needed in production.
+    "DEV_ALLOW_LOOPBACK_CLIENT_IDS": "false",
+    // Dynamic Client Registration (RFC 7591) is deprecated in MCP 2026-07-28.
+    // Off by default so readers see the CIMD-only shape. See README.
+    "ENABLE_DEPRECATED_DCR": "false",
+    // Comma-separated browser origins allowed to call /mcp directly. Requests
+    // with an Origin header outside this list are refused (DNS rebinding).
+    "ALLOWED_ORIGINS": "",
+    // Comma-separated hostnames allowed as CIMD client_id hosts. Empty accepts
+    // any public host (the open CIMD model).
+    "CIMD_ALLOWED_HOSTS": ""
+  }
+  // Optional secret, set with `wrangler secret put CONSENT_PASSWORD`:
+  // when present, the consent screen requires it before issuing a code.
+}
