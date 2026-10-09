@@ -81,3 +81,12 @@ Set in `wrangler.jsonc` (`vars`), `.dev.vars` (local), or `wrangler secret put`.
 ## Deprecated DCR
 
 Off by default. When on, `POST /register` returns `201` with a `Deprecation: true` header and a `deprecation_notice` field. Generated ids start with `dcr_`, never `https://`. Turn it on only to compare the old path.
+
+## CIMD adoption
+
+Measured on 9 October 2026 by probing each server's protected resource metadata and authorization server metadata for `client_id_metadata_document_supported: true`:
+
+- 23 of 151 vendor-run MCP servers with OAuth (15%) on [McpMetrics' list of official servers](https://mcpmetrics.io/official) advertise CIMD.
+- In a random sample of 3,000 hosts from the official MCP registry, 333 of 1,158 OAuth-protected servers (29%) advertise CIMD.
+
+An independent audit by [LLM4Agents](https://llm4agents.com/blog/cimd-agent-client-identity-audit) on 1 September 2026 found 17.2% across the registry.
