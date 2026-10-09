@@ -113,8 +113,8 @@ async function refreshTokenGrant(form: URLSearchParams, env: Env, config: Config
   return issue(store, { ...rotated.record, scope }, "refresh_token");
 }
 
-async function issue(
-  store: ReturnType<typeof authStore>,
+export async function issue(
+  store: Pick<ReturnType<typeof authStore>, "issueTokens">,
   grant: Omit<AccessTokenRecord, "expiresAt">,
   grantType: "authorization_code" | "refresh_token",
 ): Promise<Response> {
@@ -128,7 +128,11 @@ async function issue(
     { ...grant, expiresAt: now + LIFETIMES.refreshToken },
     grantType,
   );
-  if (!issued) return oauthError("invalid_grant", "grant has been revoked or has expired");
+  // Right after a deploy the AuthStore can still run the previous version,
+  // whose issueTokens stored the tokens and resolved to undefined. Only an
+  // explicit false means the grant was refused.
+  // https://developers.cloudflare.com/durable-objects/platform/known-issues/#code-updates
+  if (issued === false) return oauthError("invalid_grant", "grant has been revoked or has expired");
   return json(
     {
       access_token: accessToken,
